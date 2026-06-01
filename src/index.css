@@ -1,0 +1,179 @@
+@font-face {
+  font-family: 'GeekbleMalrangiche';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/GeekbleMalang2WOFF2.woff2') format('woff2');
+  font-weight: normal;
+  font-display: swap;
+}
+
+/* index.css — "보고 읽고 본것들" visual system
+   Soft playful · warm cream paper · thick dark outlines · soft diffuse shadows
+   Pastel periwinkle/pink/yellow palette · friendly rounded · hand-drawn marker accents. */
+
+:root {
+  /* Surface */
+  --paper:   #F6ECD6;   /* warm cream app bg */
+  --paper-2: #FBF3E2;   /* lighter cream inset cards */
+  --card:    #FFFFFF;
+  --ink:     #2B2420;   /* warm dark brown outline + text */
+  --ink-soft:#8A7F72;   /* muted brown-gray text */
+
+  /* Accents (soft pastel palette from reference) */
+  --coral:  #F2785C;
+  --coral-d:#DE5E45;
+  --yellow: #FBC53D;
+  --sky:    #9DAEE8;     /* periwinkle (illustration waves) */
+  --sky-d:  #6E80D8;
+  --pink:   #F2A1BE;     /* Featured badge */
+  --pink-d: #E47D9E;
+  --mint:   #7FBFA0;
+  --grape:  #B0A4DE;
+
+  /* Status colors — fixed, NOT themeable (independent of accent tweak) */
+  --status-done:     #7FBFA0;  /* 완독 */
+  --status-watching: #FBC53D;  /* 보는 중 */
+  --status-dropped:  #E0533C;  /* 중도하차 */
+  --status-times:    #9DAEE8;  /* N차 */
+
+  /* Outline + shadow */
+  --line: 2.5px solid var(--ink);
+  --line-thin: 2px solid var(--ink);
+  --r-lg: 30px;
+  --r-md: 22px;
+  --r-sm: 14px;
+  --shadow: 0 9px 18px rgba(43,33,24,0.22);
+  --shadow-sm: 0 5px 11px rgba(43,33,24,0.16);
+  --shadow-press: 0 3px 7px rgba(43,33,24,0.18);
+
+  /* Type */
+  --font-display: 'GeekbleMalrangiche', 'Jua', sans-serif;
+  --font-head: 'Jua', 'GeekbleMalrangiche', sans-serif;
+  --font-body: 'Gowun Dodum', system-ui, sans-serif;
+  --font-latin: 'Bagel Fat One', 'GeekbleMalrangiche', cursive;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(0,0,0,0.04) 0 22%, transparent 22.5%),
+    radial-gradient(circle at 85% 88%, rgba(0,0,0,0.035) 0 26%, transparent 26.5%),
+    #E9E6E0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+/* ── App container: mobile-first · max 500px · centered, 100% below ── */
+.app {
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 50px rgba(43,33,24,0.12);
+}
+
+/* scroll area */
+.screen {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 108px;
+}
+.screen::-webkit-scrollbar { width: 0; }
+
+/* ── Typography helpers ── */
+.t-display { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.01em; line-height: 1.02; }
+.t-head    { font-family: var(--font-head); }
+.t-body    { font-family: var(--font-body); }
+.muted     { color: var(--ink-soft); }
+
+/* ── Card with offset shadow ── */
+.card {
+  background: var(--card);
+  border: var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow);
+}
+.card-flat { background: var(--card); border: var(--line); border-radius: var(--r-md); }
+
+/* color block behind card */
+.block-shadow { position: relative; }
+
+/* ── Pills / badges ── */
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: var(--line-thin); border-radius: 999px;
+  padding: 5px 11px; font-family: var(--font-head); font-size: 13px;
+  background: #fff; white-space: nowrap; line-height: 1;
+}
+.badge-feat {
+  font-family: var(--font-head); font-size: 12px;
+  background: var(--pink); border: var(--line-thin);
+  border-radius: 999px; padding: 4px 12px; color: var(--ink);
+}
+
+/* ── Buttons ── */
+.btn {
+  font-family: var(--font-head); font-size: 16px;
+  border: var(--line); border-radius: 999px;
+  padding: 14px 22px; cursor: pointer; background: var(--card);
+  box-shadow: var(--shadow-sm); color: var(--ink);
+  transition: transform .1s, box-shadow .1s;
+}
+.btn:active { transform: translateY(2px); box-shadow: var(--shadow-press); }
+.btn-coral { background: var(--coral); color: #fff; }
+.btn-sky { background: var(--sky); color: var(--ink); }
+.btn-yellow { background: var(--yellow); color: var(--ink); }
+.btn-pink { background: var(--pink); color: var(--ink); }
+
+/* ── Bottom nav ── */
+.bottomnav {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: 14px; width: min(350px, calc(100% - 32px)); height: 70px;
+  background: var(--card); border: var(--line); border-radius: 34px;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 0 20px; z-index: 30;
+}
+.navitem {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-family: var(--font-head); font-size: 11px; color: var(--ink-soft);
+  cursor: pointer; background: none; border: none; padding: 0;
+  white-space: nowrap;
+  transition: color .12s, transform .1s;
+}
+.navitem.active { color: var(--ink); }
+.navitem:active { transform: translateY(1px); }
+.navfab {
+  width: 62px; height: 62px; border-radius: 50%;
+  background: var(--card); border: 2.5px solid var(--ink);
+  box-shadow: var(--shadow-sm);
+  display: flex; align-items: center; justify-content: center;
+  margin-top: -30px; cursor: pointer; color: var(--ink);
+  transition: transform .1s, box-shadow .1s, background .15s;
+}
+.navfab:active { transform: translateY(2px); box-shadow: var(--shadow-press); }
+
+/* squiggle accent */
+.squiggle { display: block; }
+
+/* generic icon stroke */
+.ico { stroke: currentColor; stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+/* fade/slide for screen switch */
+@keyframes screenIn { from { opacity: 0; transform: translateY(8px);} to {opacity:1; transform:none;} }
+.screen-anim { animation: screenIn .22s ease; }
+
+/* detail sheet */
+.sheet-back {
+  position: absolute; inset: 0; background: rgba(34,28,20,0.35);
+  z-index: 40; display: flex; align-items: flex-end;
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+@keyframes sheetUp { from { transform: translateY(100%);} to { transform:none;} }
