@@ -1,5 +1,5 @@
 import React from 'react';
-import { CATS, FEED } from '../data.js';
+import { CATS } from '../data.js';
 import { Icon, Stars, CatChip, Squiggle, StatusPills, iconBtn, btnReset } from '../components/ui.jsx';
 
 // screen-home.jsx — SNS feed: each record is a scrolling post
@@ -79,14 +79,14 @@ function FeedPost({ rec, onOpen }) {
   );
 }
 
-function HomeScreen({ onOpen, onNotify, onSearch }) {
+function HomeScreen({ records, onOpen, onNotify, onSearch }) {
   return (
     <div className="screen screen-anim" style={{ padding:'4px 16px 0' }}>
       {/* top bar */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'8px 0 6px' }}>
         <div>
           <div className="t-display" style={{ fontSize:30, lineHeight:1 }}>오늘의 기록</div>
-          <div className="muted" style={{ fontSize:13, marginTop:4 }}>2026년 5월 · 14개를 봤어요</div>
+          <div className="muted" style={{ fontSize:13, marginTop:4 }}>총 {records.length}개를 봤어요</div>
         </div>
         <div style={{ display:'flex', gap:10 }}>
           <button onClick={onSearch} className="card-flat" style={iconBtn}>
@@ -109,7 +109,7 @@ function HomeScreen({ onOpen, onNotify, onSearch }) {
         {Object.keys(CATS).map(k => <CatChip key={k} cat={k} />)}
       </div>
 
-      {FEED.map(rec => <FeedPost key={rec.id} rec={rec} onOpen={onOpen} />)}
+      {records.map(rec => <FeedPost key={rec.id} rec={rec} onOpen={onOpen} />)}
 
       <div className="muted" style={{ textAlign:'center', fontSize:13, padding:'4px 0 20px' }}>
         — 여기까지 봤어요 —

@@ -1,18 +1,32 @@
 import React from 'react';
 import { CATS } from '../data.js';
-import { Icon, Stars, Poster, iconBtn, btnReset } from '../components/ui.jsx';
+import { Icon, Stars, iconBtn, btnReset } from '../components/ui.jsx';
 
-// screen-record.jsx — 기록: add a new entry (full-screen modal)
+const CAT_COLORS = {
+  book:    { cover: '#E9DCC0', coverFg: '#221C14' },
+  movie:   { cover: '#C97A4A', coverFg: '#fff' },
+  drama:   { cover: '#7E6BA8', coverFg: '#fff' },
+  ott:     { cover: '#7FBFA0', coverFg: '#fff' },
+  exhibit: { cover: '#5E6B5A', coverFg: '#fff' },
+  musical: { cover: '#B5483C', coverFg: '#FBBE2C' },
+  play:    { cover: '#3E5C8A', coverFg: '#fff' },
+};
 
-function RecordScreen({ onClose }) {
+function RecordScreen({ onClose, onSave }) {
   const [cat, setCat] = React.useState('book');
+  const [title, setTitle] = React.useState('');
+  const [creator, setCreator] = React.useState('');
   const [rating, setRating] = React.useState(4);
   const [status, setStatus] = React.useState('done');
   const [times, setTimes] = React.useState(1);
+  const [note, setNote] = React.useState('');
   const [quotes, setQuotes] = React.useState(['']);
+  const [startDate, setStartDate] = React.useState('');
+  const [endDate, setEndDate] = React.useState('');
+  const [stillWatching, setStillWatching] = React.useState(false);
   const [place, setPlace] = React.useState(null);
   const [people, setPeople] = React.useState([]);
-  const [sheet, setSheet] = React.useState(null); // 'place' | 'people'
+  const [sheet, setSheet] = React.useState(null);
 
   const togglePerson = (name) => setPeople(ps => ps.includes(name) ? ps.filter(p=>p!==name) : [...ps, name]);
 
@@ -21,8 +35,42 @@ function RecordScreen({ onClose }) {
     ? [{k:'done',l:'완독'},{k:'watching',l:'보는 중'},{k:'dropped',l:'중도하차'}]
     : [{k:'done',l:'봤어요'},{k:'dropped',l:'중도하차'}];
 
-  const addQuote = () => setQuotes(qs => [...qs, '']);
+  const addQuote    = () => setQuotes(qs => [...qs, '']);
   const removeQuote = (i) => setQuotes(qs => qs.filter((_,j)=>j!==i));
+  const updateQuote = (i, val) => setQuotes(qs => qs.map((q,j) => j===i ? val : q));
+
+  const handleSave = () => {
+    if (!title.trim()) return;
+    const now = new Date();
+    const id = 'r' + now.getTime();
+    const when = now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
+      + ' · ' + now.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+    const rec = {
+      id,
+      cat,
+      title: title.trim(),
+      creator: creator.trim() || null,
+      ...CAT_COLORS[cat],
+      date: '오늘',
+      when,
+      status,
+      times,
+      rating,
+      note: note.trim() || null,
+      quote: quotes.filter(q => q.trim())[0] || null,
+      tags: [],
+      with: people.length ? people.join(', ') : null,
+      place: place || null,
+      ...(longForm && {
+        span: {
+          start: startDate || now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }),
+          end: stillWatching ? null : (endDate || now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })),
+          days: null,
+        }
+      }),
+    };
+    onSave(rec);
+  };
 
   return (
     <div className="screen-anim" style={{ position:'absolute', inset:0, background:'var(--paper)', zIndex:50, display:'flex', flexDirection:'column' }}>
@@ -30,7 +78,7 @@ function RecordScreen({ onClose }) {
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'52px 18px 10px', flex:'none' }}>
         <button onClick={onClose} style={{ ...iconBtn, background:'#fff', border:'2.5px solid var(--ink)' }}><Icon name="close" size={22} /></button>
         <span className="t-display" style={{ fontSize:22 }}>새 기록</span>
-        <button className="btn btn-coral" style={{ padding:'9px 18px', fontSize:14 }} onClick={onClose}>저장</button>
+        <button className="btn btn-coral" style={{ padding:'9px 18px', fontSize:14 }} onClick={handleSave}>저장</button>
       </div>
 
       <div className="screen" style={{ padding:'4px 18px 0' }}>
@@ -48,82 +96,68 @@ function RecordScreen({ onClose }) {
           ))}
         </div>
 
-        {/* search auto-fill */}
-        <label className="t-head" style={lbl}>제목으로 찾기</label>
-        <div className="card-flat" style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 16px', borderRadius:14, marginBottom:6, boxShadow:'var(--shadow-sm)' }}>
+        {/* title input */}
+        <label className="t-head" style={lbl}>제목</label>
+        <div className="card-flat" style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 16px', borderRadius:14, marginBottom:10, boxShadow:'var(--shadow-sm)' }}>
           <Icon name="search" size={20} />
-          <span style={{ fontSize:15 }}>작별인사</span>
-          <span style={{ flex:1 }} />
-          <Icon name="camera" size={20} />
-        </div>
-        <div className="muted" style={{ fontSize:12, marginBottom:14, paddingLeft:4 }}>제목·표지·작가가 자동으로 채워져요 · 안 나오면 직접 입력</div>
-
-        {/* auto-filled card */}
-        <div className="card" style={{ display:'flex', gap:12, padding:12, marginBottom:18 }}>
-          <Poster rec={{cat, title:'작별인사', cover:'#E9DCC0', coverFg:'#221C14'}} w={64} h={92} radius={8} />
-          <div style={{ flex:1, minWidth:0 }}>
-            <div className="t-head" style={{ fontSize:17 }}>작별인사</div>
-            <div className="muted" style={{ fontSize:13, marginBottom:6 }}>김영하 · 복복서가 · 2022</div>
-            <span className="pill" style={{ fontSize:11, padding:'3px 8px' }}>장편소설</span>
-          </div>
-          <span style={{ color:'var(--mint)' }}><Icon name="bookmark" size={20} fill="var(--mint)" /></span>
+          <input
+            value={title}
+            onChange={e=>setTitle(e.target.value)}
+            placeholder="제목을 입력하세요"
+            style={{ flex:1, border:'none', outline:'none', background:'transparent', fontFamily:'var(--font-body)', fontSize:15, color:'var(--ink)', minWidth:0 }}
+          />
         </div>
 
-        {/* 반자동 — 이미 기록한 작품이면 새 회차로 묶기 안내 */}
-        <div className="card-flat" style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 14px', borderRadius:14, marginBottom:18, borderLeft:'5px solid var(--status-times)' }}>
-          <span style={{ width:40, height:40, borderRadius:12, background:'var(--status-times)', border:'2.5px solid var(--ink)', display:'flex', alignItems:'center', justifyContent:'center', flex:'none' }}>
-            <span className="t-head" style={{ fontSize:15 }}>3차</span>
-          </span>
-          <div style={{ flex:1, minWidth:0 }}>
-            <div className="t-head" style={{ fontSize:14, lineHeight:1.25 }}>이미 2번 기록한 작품이에요</div>
-            <div className="muted" style={{ fontSize:12 }}>새 회차로 묶어서 기록할까요?</div>
-          </div>
-          <label style={{ display:'flex', flex:'none', cursor:'pointer' }}>
-            <span style={{ width:46, height:28, borderRadius:999, background:'var(--status-done)', border:'2.5px solid var(--ink)', position:'relative', transition:'background .15s' }}>
-              <span style={{ position:'absolute', top:1.5, right:2, width:21, height:21, borderRadius:'50%', background:'#fff', border:'2px solid var(--ink)' }} />
-            </span>
-          </label>
+        {/* creator input */}
+        <div className="card-flat" style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 16px', borderRadius:14, marginBottom:18, boxShadow:'var(--shadow-sm)' }}>
+          <Icon name="user" size={20} />
+          <input
+            value={creator}
+            onChange={e=>setCreator(e.target.value)}
+            placeholder="감독 · 작가 · 아티스트 (선택)"
+            style={{ flex:1, border:'none', outline:'none', background:'transparent', fontFamily:'var(--font-body)', fontSize:15, color:'var(--ink)', minWidth:0 }}
+          />
         </div>
 
-        {/* dates — range for long-form, single for one-session */}
-        {(() => {
-          return longForm ? (
-            <>
-              <label className="t-head" style={lbl}>언제 보기 시작 → 끝냈어요?</label>
-              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                <div className="card-flat" style={{ flex:1, display:'flex', alignItems:'center', gap:8, padding:'12px 14px', borderRadius:14 }}>
-                  <Icon name="calendar" size={18} />
-                  <div>
-                    <div className="muted" style={{ fontSize:11 }}>시작</div>
-                    <div style={{ fontSize:14 }}>5월 19일</div>
-                  </div>
-                </div>
-                <span className="t-head" style={{ color:'var(--ink-soft)' }}>→</span>
-                <div className="card-flat" style={{ flex:1, display:'flex', alignItems:'center', gap:8, padding:'12px 14px', borderRadius:14 }}>
-                  <Icon name="calendar" size={18} />
-                  <div>
-                    <div className="muted" style={{ fontSize:11 }}>완료</div>
-                    <div style={{ fontSize:14 }}>5월 26일</div>
-                  </div>
-                </div>
-              </div>
-              <label style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16, paddingLeft:2, cursor:'pointer' }}>
-                <span style={{ width:22, height:22, borderRadius:7, border:'2.5px solid var(--ink)', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center' }}></span>
-                <span className="muted" style={{ fontSize:13 }}>아직 보는 중이에요 (완료일 없음)</span>
-              </label>
-            </>
-          ) : (
-            <>
-              <label className="t-head" style={lbl}>언제 봤어요?</label>
-              <div className="card-flat" style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 16px', borderRadius:14, marginBottom:16 }}>
+        {/* dates */}
+        {longForm ? (
+          <>
+            <label className="t-head" style={lbl}>언제 보기 시작 → 끝냈어요?</label>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+              <div className="card-flat" style={{ flex:1, display:'flex', alignItems:'center', gap:8, padding:'12px 14px', borderRadius:14 }}>
                 <Icon name="calendar" size={18} />
-                <span style={{ fontSize:15 }}>5월 26일</span>
+                <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)}
+                  style={{ flex:1, border:'none', outline:'none', background:'transparent', fontFamily:'var(--font-body)', fontSize:14, color:'var(--ink)', minWidth:0 }} />
               </div>
-            </>
-          );
-        })()}
+              <span className="t-head" style={{ color:'var(--ink-soft)' }}>→</span>
+              <div className="card-flat" style={{ flex:1, display:'flex', alignItems:'center', gap:8, padding:'12px 14px', borderRadius:14, opacity: stillWatching ? 0.4 : 1 }}>
+                <Icon name="calendar" size={18} />
+                <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} disabled={stillWatching}
+                  style={{ flex:1, border:'none', outline:'none', background:'transparent', fontFamily:'var(--font-body)', fontSize:14, color:'var(--ink)', minWidth:0 }} />
+              </div>
+            </div>
+            <label style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16, paddingLeft:2, cursor:'pointer' }}
+              onClick={()=>setStillWatching(v=>!v)}>
+              <span style={{ width:22, height:22, borderRadius:7, border:'2.5px solid var(--ink)',
+                background: stillWatching ? 'var(--ink)' : '#fff',
+                display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:14 }}>
+                {stillWatching && '✓'}
+              </span>
+              <span className="muted" style={{ fontSize:13 }}>아직 보는 중이에요 (완료일 없음)</span>
+            </label>
+          </>
+        ) : (
+          <>
+            <label className="t-head" style={lbl}>언제 봤어요?</label>
+            <div className="card-flat" style={{ display:'flex', alignItems:'center', gap:10, padding:'13px 16px', borderRadius:14, marginBottom:16 }}>
+              <Icon name="calendar" size={18} />
+              <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}
+                style={{ flex:1, border:'none', outline:'none', background:'transparent', fontFamily:'var(--font-body)', fontSize:15, color:'var(--ink)', minWidth:0 }} />
+            </div>
+          </>
+        )}
 
-        {/* status tags */}
+        {/* status */}
         <label className="t-head" style={lbl}>상태</label>
         <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:16 }}>
           {STATUS_OPTS.map(o => {
@@ -140,7 +174,7 @@ function RecordScreen({ onClose }) {
           })}
         </div>
 
-        {/* rewatch counter (N차) */}
+        {/* rewatch counter */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18 }}>
           <div>
             <label className="t-head" style={{ ...lbl, margin:0 }}>{longForm?'다시 본 횟수':'관람 회차'}</label>
@@ -156,17 +190,20 @@ function RecordScreen({ onClose }) {
         {/* rating */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
           <label className="t-head" style={{ ...lbl, margin:0 }}>별점</label>
-          <button onClick={()=>{}} style={{ border:'none', background:'none', cursor:'pointer' }}>
-            <span onClick={()=>setRating(r=> r>=5?0:r+1)}><Stars value={rating} size={28} gap={3} /></span>
-          </button>
+          <span onClick={()=>setRating(r=> r>=5?1:r+1)} style={{ cursor:'pointer' }}>
+            <Stars value={rating} size={28} gap={3} />
+          </span>
         </div>
-
-        {/* mood removed */}
 
         {/* one-liner */}
         <label className="t-head" style={lbl}>한 줄 느낌</label>
         <div className="card-flat" style={{ padding:'13px 16px', borderRadius:14, marginBottom:18 }}>
-          <span style={{ fontSize:15 }}>오래 남을 한 권.</span>
+          <input
+            value={note}
+            onChange={e=>setNote(e.target.value)}
+            placeholder="오래 남을 한 마디…"
+            style={{ width:'100%', border:'none', outline:'none', background:'transparent', fontFamily:'var(--font-body)', fontSize:15, color:'var(--ink)', minWidth:0, boxSizing:'border-box' }}
+          />
         </div>
 
         {/* quotes */}
@@ -176,8 +213,14 @@ function RecordScreen({ onClose }) {
         <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:10 }}>
           {quotes.map((qt,i) => (
             <div key={i} className="card-flat" style={{ display:'flex', alignItems:'flex-start', gap:8, padding:'12px 14px', borderRadius:14, borderLeft:'5px solid var(--yellow)' }}>
-              <span className="t-display" style={{ fontSize:20, color:'var(--coral-d)', lineHeight:1, marginTop:2 }}>“</span>
-              <span className="muted" style={{ flex:1, fontSize:14, lineHeight:1.5 }}>{i===0 ? '사람은 결국 자기가 살아온 방식으로 떠나간다.' : '문장을 입력하세요…'}</span>
+              <span className="t-display" style={{ fontSize:20, color:'var(--coral-d)', lineHeight:1, marginTop:2 }}>"</span>
+              <textarea
+                value={qt}
+                onChange={e=>updateQuote(i, e.target.value)}
+                placeholder="문장을 입력하세요…"
+                rows={2}
+                style={{ flex:1, border:'none', outline:'none', background:'transparent', fontFamily:'var(--font-body)', fontSize:14, color:'var(--ink)', lineHeight:1.5, resize:'none', minWidth:0 }}
+              />
               {quotes.length>1 && (
                 <button onClick={()=>removeQuote(i)} style={{ ...btnReset, color:'var(--ink-soft)', marginTop:2 }}><Icon name="close" size={16} /></button>
               )}
@@ -191,7 +234,11 @@ function RecordScreen({ onClose }) {
         {/* long note */}
         <label className="t-head" style={lbl}>긴 감상 <span className="muted" style={{ fontSize:12 }}>(선택)</span></label>
         <div className="card-flat" style={{ padding:'13px 16px', borderRadius:14, minHeight:96, marginBottom:14 }}>
-          <span className="muted" style={{ fontSize:14, lineHeight:1.5 }}>마음에 남은 장면, 같이 본 사람…</span>
+          <textarea
+            placeholder="마음에 남은 장면, 같이 본 사람…"
+            rows={4}
+            style={{ width:'100%', border:'none', outline:'none', background:'transparent', fontFamily:'var(--font-body)', fontSize:14, color:'var(--ink)', lineHeight:1.5, resize:'none', minWidth:0, boxSizing:'border-box' }}
+          />
         </div>
 
         {/* attachments */}
@@ -220,7 +267,6 @@ function RecordScreen({ onClose }) {
 const lbl = { display:'block', fontSize:14, marginBottom:8, color:'var(--ink-soft)' };
 const stepBtn = { width:36, height:36, borderRadius:'50%', border:'2.5px solid var(--ink)', background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--ink)' };
 
-// ─── Place search sheet (map autocomplete + GPS + recent) ───
 function PlaceSheet({ onClose, onPick }) {
   const [q, setQ] = React.useState('');
   const inputRef = React.useRef(null);
@@ -249,7 +295,6 @@ function PlaceSheet({ onClose, onPick }) {
             <span className="t-display" style={{ fontSize:20 }}>장소</span>
             <button onClick={onClose} style={{ ...iconBtn, width:36, height:36, background:'#fff', border:'2.5px solid var(--ink)' }}><Icon name="close" size={18} /></button>
           </div>
-          {/* search input */}
           <div className="card-flat" style={{ display:'flex', alignItems:'center', gap:10, padding:'12px 16px', borderRadius:999, boxShadow:'var(--shadow-sm)' }}>
             <Icon name="search" size={20} />
             <input ref={inputRef} value={q} onChange={e=>setQ(e.target.value)}
@@ -275,7 +320,6 @@ function PlaceSheet({ onClose, onPick }) {
             </div>
           ) : (
             <>
-              {/* current location */}
               <button onClick={()=>onPick('현재 위치')} className="card-flat" style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 14px', borderRadius:14, width:'100%', cursor:'pointer', marginBottom:16, boxShadow:'var(--shadow-sm)', textAlign:'left' }}>
                 <span style={{ width:40, height:40, borderRadius:12, background:'var(--sky)', border:'2.5px solid var(--ink)', display:'flex', alignItems:'center', justifyContent:'center', flex:'none' }}><Icon name="pin" size={20} /></span>
                 <span>
@@ -300,7 +344,6 @@ function PlaceSheet({ onClose, onPick }) {
   );
 }
 
-// ─── People chip sheet (reusable people tags) ───────────────
 function PeopleSheet({ selected, onToggle, onClose }) {
   const [q, setQ] = React.useState('');
   const inputRef = React.useRef(null);
