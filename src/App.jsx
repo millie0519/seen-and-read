@@ -5,18 +5,7 @@ import { LibraryScreen } from './screens/Library.jsx';
 import { ProfileScreen, DetailPage } from './screens/Profile.jsx';
 import { RecordScreen } from './screens/Record.jsx';
 import { SearchScreen } from './screens/Search.jsx';
-import { FEED } from './data.js';
-
-const STORAGE_KEY = 'seen-and-read-records';
-
-function loadRecords() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : FEED;
-  } catch {
-    return FEED;
-  }
-}
+import { migrateFromLocalStorage } from './db/migrate.js';
 
 const TAB_DEF = [
   { id: 'home',    label: '홈',   icon: 'home' },
@@ -26,26 +15,21 @@ const TAB_DEF = [
 ];
 
 export default function App() {
-  const [tab, setTab] = React.useState('home');
-  const [detail, setDetail] = React.useState(null);
-  const [adding, setAdding] = React.useState(false);
-  const [searching, setSearching] = React.useState(false);
-  const [records, setRecords] = React.useState(loadRecords);
+  const [tab, setTab]               = React.useState('home');
+  const [detailLogId, setDetailLogId] = React.useState(null);  // 상세 열린 log ID
+  const [editingRec, setEditingRec]   = React.useState(null);  // 수정 중인 RecordView
+  const [adding, setAdding]           = React.useState(false);
+  const [searching, setSearching]     = React.useState(false);
 
-  React.useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  }, [records]);
+  // 앱 첫 실행 시 localStorage → IndexedDB 마이그레이션
+  React.useEffect(() => { migrateFromLocalStorage(); }, []);
 
-  const addRecord    = (rec) => setRecords(prev => [rec, ...prev]);
-  const deleteRecord = (id)  => setRecords(prev => prev.filter(r => r.id !== id));
-  const updateRecord = (id, patch) => setRecords(prev => prev.map(r => r.id === id ? { ...r, ...patch } : r));
-
-  const openDetail = (rec) => setDetail(rec);
+  const openDetail = (logId) => setDetailLogId(logId);
 
   return (
     <div className="app">
-      {tab === 'home'    && <HomeScreen records={records} onOpen={openDetail} onNotify={() => {}} onSearch={() => setSearching(true)} />}
-      {tab === 'library' && <LibraryScreen records={records} onOpen={openDetail} onSearch={() => setSearching(true)} />}
+      {tab === 'home'    && <HomeScreen    onOpen={openDetail} onSearch={() => setSearching(true)} />}
+      {tab === 'library' && <LibraryScreen onOpen={openDetail} onSearch={() => setSearching(true)} />}
       {tab === 'profile' && <ProfileScreen />}
 
       <nav className="bottomnav">
@@ -68,25 +52,38 @@ export default function App() {
         )}
       </nav>
 
-      {detail && (
+      {/* 상세 페이지 — logId만 전달, 화면 내부에서 직접 DB 조회 */}
+      {detailLogId && (
         <DetailPage
-          rec={detail}
-          onClose={() => setDetail(null)}
-          onDelete={(id) => { deleteRecord(id); setDetail(null); }}
-          onUpdate={(id, patch) => { updateRecord(id, patch); setDetail(prev => ({ ...prev, ...patch })); }}
+          logId={detailLogId}
+          onClose={() => setDetailLogId(null)}
+          onDelete={() => setDetailLogId(null)}
+          onEdit={(rec) => setEditingRec(rec)}
         />
       )}
+
+      {/* 검색 */}
       {searching && (
         <SearchScreen
-          records={records}
           onClose={() => setSearching(false)}
-          onOpen={(r) => { setSearching(false); openDetail(r); }}
+          onOpen={(logId) => { setSearching(false); openDetail(logId); }}
         />
       )}
+
+      {/* 새 기록 추가 */}
       {adding && (
         <RecordScreen
           onClose={() => setAdding(false)}
-          onSave={(rec) => { addRecord(rec); setAdding(false); }}
+          onSaved={() => setAdding(false)}
+        />
+      )}
+
+      {/* 기록 수정 — RecordView 전체를 전달 */}
+      {editingRec && (
+        <RecordScreen
+          rec={editingRec}
+          onClose={() => setEditingRec(null)}
+          onSaved={() => setEditingRec(null)}
         />
       )}
     </div>

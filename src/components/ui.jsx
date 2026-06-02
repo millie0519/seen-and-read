@@ -34,6 +34,7 @@ function Icon({ name, size = 24, fill = 'none', style = {} }) {
     chart: <><path {...p} d="M4 20V4M4 20h16"/><rect {...p} x="7" y="12" width="3" height="5"/><rect {...p} x="12.5" y="8" width="3" height="9"/><rect {...p} x="18" y="14" width="0" height="3"/></>,
     share: <><circle {...p} cx="6" cy="12" r="2.5"/><circle {...p} cx="17" cy="6" r="2.5"/><circle {...p} cx="17" cy="18" r="2.5"/><path {...p} d="m8.2 10.8 6.6-3.6M8.2 13.2l6.6 3.6"/></>,
     edit: <><path {...p} d="M5 19h14"/><path {...p} d="M14 5.5 18.5 10 9 19.5H5V15z"/></>,
+    trash: <><path {...p} d="M4 7h16"/><path {...p} d="M9 7V5h6v2"/><path {...p} d="M6 10l1 10h10l1-10"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} style={style}>
