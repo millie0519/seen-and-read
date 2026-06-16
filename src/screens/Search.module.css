@@ -1,0 +1,90 @@
+.container {
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 52px 16px 12px;
+  flex: none;
+}
+
+.searchBar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+
+.filterRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 16px 12px;
+  flex: none;
+  scrollbar-width: none;
+}
+.filterRow::-webkit-scrollbar { display: none; }
+
+.body { padding: 4px 16px 0; }
+
+.recentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0 10px;
+}
+
+.recentTitle { margin: 0; font-size: 16px; }
+.recentChips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.recentListTitle { margin: 0 0 12px; font-size: 16px; }
+.resultList { display: flex; flex-direction: column; gap: 10px; }
+
+.resultRow {
+  display: flex;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 16px;
+  cursor: pointer;
+  text-align: left;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+}
+
+.resultThumb {
+  width: 48px;
+  height: 68px;
+  flex: none;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.resultMeta { flex: 1; min-width: 0; }
+.resultCatRow { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; }
+.resultTitle { font-size: 16px; line-height: 1.15; }
+.resultCreator { font-size: 12px; margin-bottom: 4px; }
+.resultChevron { color: var(--ink-soft); flex: none; }
+
+.searchCount { font-size: 13px; margin: 8px 0 12px; }
+
+.emptyState { text-align: center; padding: 40px 20px; }
+.emptyIcon { font-size: 44px; margin-bottom: 12px; }
+.emptyTitle { font-size: 17px; margin-bottom: 6px; }
+.emptyMsg { font-size: 14px; line-height: 1.5; margin-bottom: 18px; }
+
+.bottomSpacer { height: 30px; }

@@ -1,9 +1,7 @@
 import React from 'react';
 import { CATS } from '../data.js';
+import styles from './ui.module.css';
 
-// components.jsx — shared UI primitives for the prototype
-
-// ─── Icons (thick-stroke line, chunky) ──────────────────────
 function Icon({ name, size = 24, fill = 'none', style = {} }) {
   const p = { className: 'ico', strokeWidth: 2.4 };
   const paths = {
@@ -43,7 +41,6 @@ function Icon({ name, size = 24, fill = 'none', style = {} }) {
   );
 }
 
-// ─── Star rating ────────────────────────────────────────────
 function Stars({ value = 0, size = 15, gap = 1 }) {
   return (
     <span style={{ display: 'inline-flex', gap }}>
@@ -57,7 +54,6 @@ function Stars({ value = 0, size = 15, gap = 1 }) {
   );
 }
 
-// ─── Category chip ──────────────────────────────────────────
 function CatChip({ cat, size = 13, solid = false }) {
   const c = CATS[cat];
   if (!c) return null;
@@ -73,27 +69,24 @@ function CatChip({ cat, size = 13, solid = false }) {
   );
 }
 
-// ─── Poster / cover placeholder ─────────────────────────────
 function Poster({ rec, w, h, tilt = 0, radius = 8, showTitle = true }) {
   const cover = rec.cover || '#E9DCC0';
   const fg = rec.coverFg || 'var(--ink)';
-  const nw = typeof w === 'number' ? w : 120;  // fallback for '100%' etc
+  const nw = typeof w === 'number' ? w : 120;
   return (
-    <div style={{
-      width: w, height: h, background: cover, color: fg,
-      border: '2px solid var(--ink)', borderRadius: radius,
-      transform: tilt ? `rotate(${tilt}deg)` : undefined,
-      position: 'relative', flex: 'none', overflow: 'hidden',
-      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-      padding: 8, boxSizing: 'border-box',
-    }}>
-      {/* faux cover composition */}
-      <div style={{ display:'flex', justifyContent:'flex-end' }}>
-        <span style={{ opacity: 0.85 }}><Icon name={CATS[rec.cat].icon} size={Math.min(18, nw*0.18)} /></span>
+    <div
+      className={styles.poster}
+      style={{
+        width: w, height: h, background: cover, color: fg,
+        borderRadius: radius,
+        transform: tilt ? `rotate(${tilt}deg)` : undefined,
+      }}
+    >
+      <div className={styles.posterIconRow}>
+        <Icon name={CATS[rec.cat].icon} size={Math.min(18, nw*0.18)} />
       </div>
       {showTitle && (
-        <div style={{
-          fontFamily: 'var(--font-display)', lineHeight: 1.04,
+        <div className={styles.posterTitle} style={{
           fontSize: Math.max(11, Math.min(20, nw * 0.16)),
           textShadow: fg === '#fff' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none',
         }}>{rec.title}</div>
@@ -102,7 +95,6 @@ function Poster({ rec, w, h, tilt = 0, radius = 8, showTitle = true }) {
   );
 }
 
-// ─── Squiggle (hand-drawn marker accent) ────────────────────
 function Squiggle({ w = 120, color = 'var(--yellow)', sw = 6, style = {} }) {
   return (
     <svg width={w} height="16" viewBox={`0 0 ${w} 16`} className="squiggle" style={style}>
@@ -112,17 +104,17 @@ function Squiggle({ w = 120, color = 'var(--yellow)', sw = 6, style = {} }) {
   );
 }
 
-// ─── Section header ─────────────────────────────────────────
 function SectionHead({ title, action, onAction }) {
   return (
-    <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', margin:'2px 0 12px' }}>
-      <h3 className="t-head" style={{ margin:0, fontSize:20 }}>{title}</h3>
-      {action && <button onClick={onAction} className="t-head" style={{ background:'none', border:'none', color:'var(--coral-d)', fontSize:13, cursor:'pointer', textDecoration:'underline' }}>{action}</button>}
+    <div className={styles.sectionHead}>
+      <h3 className={`t-head ${styles.sectionHeadTitle}`}>{title}</h3>
+      {action && (
+        <button onClick={onAction} className={`t-head ${styles.sectionHeadAction}`}>{action}</button>
+      )}
     </div>
   );
 }
 
-// ─── Status pills (완독 / 보는 중 / 중도하차 / N차) ──────────
 function statusPills(rec) {
   const out = [];
   const longForm = rec.cat==='book' || rec.cat==='drama' || rec.cat==='ott';
@@ -144,7 +136,7 @@ function StatusPills({ rec, size = 12 }) {
   const pills = statusPills(rec);
   if (!pills.length) return null;
   return (
-    <span style={{ display:'inline-flex', gap:6, flexWrap:'wrap' }}>
+    <span className={styles.statusPillRow}>
       {pills.map((p,i) => (
         <span key={i} className="pill" style={{ background:p.tone, color:p.fg, fontSize:size, padding:'3px 10px' }}>
           {p.icon && <Icon name={p.icon} size={size+1} />}{p.label}
@@ -154,8 +146,4 @@ function StatusPills({ rec, size = 12 }) {
   );
 }
 
-// shared inline-style objects used across screens
-const iconBtn = { position:'relative', width:44, height:44, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'#fff' };
-const btnReset = { background:'none', border:'none', padding:0, cursor:'pointer', display:'flex', color:'var(--ink)' };
-
-export { Icon, Stars, CatChip, Poster, Squiggle, SectionHead, statusPills, StatusPills, iconBtn, btnReset };
+export { Icon, Stars, CatChip, Poster, Squiggle, SectionHead, statusPills, StatusPills };

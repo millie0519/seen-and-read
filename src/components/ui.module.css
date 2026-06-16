@@ -1,0 +1,49 @@
+.poster {
+  border: 2px solid var(--ink);
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.posterIconRow {
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0.85;
+}
+
+.posterTitle {
+  font-family: var(--font-display);
+  line-height: 1.04;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 2px 0 12px;
+}
+
+.sectionHeadTitle {
+  margin: 0;
+  font-size: 20px;
+}
+
+.sectionHeadAction {
+  background: none;
+  border: none;
+  color: var(--coral-d);
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.statusPillRow {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}

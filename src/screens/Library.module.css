@@ -1,0 +1,118 @@
+.screen { padding: 4px 16px 0; }
+
+.topBar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 8px 0 2px;
+}
+
+.topBarTitle { font-size: 30px; line-height: 1; }
+.topBarCount { font-size: 13px; }
+
+.searchBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+}
+
+.searchBtnLabel { font-size: 15px; }
+
+.filterRow {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0 16px 16px;
+  scrollbar-width: none;
+}
+.filterRow::-webkit-scrollbar { display: none; }
+
+.recentGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.recentItem { cursor: pointer; }
+.recentTitle { font-size: 13px; margin-top: 6px; line-height: 1.2; }
+.recentStars { margin-top: 2px; }
+
+.bookSection { margin-bottom: 24px; }
+
+.bookRow {
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.bookSpine {
+  width: 46px;
+  border: 2px solid var(--ink);
+  border-radius: 4px 4px 2px 2px;
+  flex: none;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 6px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.bookSpineTitle {
+  writing-mode: vertical-rl;
+  font-family: var(--font-head);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.shelfPlank {
+  height: 8px;
+  background: var(--ink);
+  border-radius: 3px;
+  margin-top: -2px;
+}
+
+.shelfBase {
+  height: 14px;
+  background: var(--paper-2);
+  border-left: 2.5px solid var(--ink);
+  border-right: 2.5px solid var(--ink);
+  border-bottom: 2.5px solid var(--ink);
+  border-radius: 0 0 8px 8px;
+}
+
+.movieGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.movieCard {
+  width: 100%;
+  height: 150px;
+  border: 2.5px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.movieCardHeader { display: flex; justify-content: flex-end; opacity: 0.85; }
+.movieCardTitle { font-size: 17px; line-height: 1.05; }
+
+.emptyMsg { text-align: center; font-size: 14px; padding: 40px 0; }

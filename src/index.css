@@ -162,6 +162,72 @@ body {
 /* squiggle accent */
 .squiggle { display: block; }
 
+/* ── Shared button resets ── */
+.icon-btn {
+  position: relative;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  background: #fff;
+}
+
+.btn-reset {
+  background: none; border: none; padding: 0;
+  cursor: pointer;
+  display: flex;
+  color: var(--ink);
+}
+
+/* ── Shared input field ── */
+.field-input {
+  flex: 1;
+  border: none; outline: none; background: transparent;
+  font-family: var(--font-body); font-size: 15px; color: var(--ink);
+  min-width: 0;
+}
+
+.field-input-sm {
+  flex: 1;
+  border: none; outline: none; background: transparent;
+  font-family: var(--font-body); font-size: 14px; color: var(--ink);
+  min-width: 0;
+}
+
+.textarea-field {
+  width: 100%;
+  border: none; outline: none; background: transparent;
+  font-family: var(--font-body); font-size: 14px; color: var(--ink);
+  line-height: 1.5; resize: none; min-width: 0; box-sizing: border-box;
+}
+
+/* ── Shared horizontal filter row ── */
+.filter-row {
+  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+}
+.filter-row::-webkit-scrollbar { display: none; }
+
+.filter-btn {
+  border: none; background: none; padding: 0; cursor: pointer; flex: none;
+}
+
+/* ── Bottom sheet primitives ── */
+.sheet-inner {
+  width: 100%; max-height: 80%;
+  background: var(--paper);
+  border-top: 3px solid var(--ink);
+  border-radius: 28px 28px 0 0;
+  display: flex; flex-direction: column;
+  animation: sheetUp .26s cubic-bezier(.2,.8,.2,1);
+}
+
+.sheet-handle-row { padding: 10px 0 4px; flex: none; }
+
+.sheet-handle {
+  width: 46px; height: 5px; border-radius: 3px;
+  background: var(--ink); opacity: 0.3; margin: 0 auto;
+}
+
 /* generic icon stroke */
 .ico { stroke: currentColor; stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 

@@ -1,0 +1,270 @@
+.container {
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 52px 18px 10px;
+  flex: none;
+}
+
+.headerTitle { font-size: 22px; }
+
+.catRow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+.catBtn { border: none; background: none; padding: 0; cursor: pointer; }
+
+.lbl { display: block; font-size: 14px; margin-bottom: 8px; color: var(--ink-soft); }
+
+.inputBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  box-shadow: var(--shadow-sm);
+}
+
+.inputBoxGap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.dateRow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+
+.dateField {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+
+.dateArrow { color: var(--ink-soft); }
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-left: 2px;
+  cursor: pointer;
+}
+
+.checkBox {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2.5px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+}
+
+.checkLabel { font-size: 13px; }
+
+.statusRow { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.statusBtn { border: none; background: none; padding: 0; cursor: pointer; }
+
+.stepperRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.stepperSub { font-size: 12px; }
+
+.stepperControls { display: flex; align-items: center; gap: 10px; }
+
+.stepperBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2.5px solid var(--ink);
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.stepperCount { font-size: 22px; min-width: 44px; text-align: center; }
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.ratingStars { cursor: pointer; }
+
+.tagsRow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.tagClose { margin-left: 4px; }
+
+.tagInputBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.noteBox { padding: 13px 16px; border-radius: 14px; margin-bottom: 18px; }
+
+.noteInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--ink);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.quoteLbl { margin-bottom: 8px; }
+.quoteLblSub { font-size: 12px; }
+
+.quotesStack { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+.quoteItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border-left: 5px solid var(--yellow);
+}
+
+.quoteAccent { font-size: 20px; color: var(--coral-d); line-height: 1; margin-top: 2px; }
+
+.quoteTextarea {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.5;
+  resize: none;
+  min-width: 0;
+}
+
+.quoteRemove { color: var(--ink-soft); margin-top: 2px; }
+
+.attachRow { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.bottomSpacer { height: 30px; }
+
+/* Sheets */
+.sheetHeader {
+  padding: 8px 18px 12px;
+  flex: none;
+}
+
+.sheetHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.sheetTitle { font-size: 20px; }
+
+.sheetSearchBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+
+.sheetBody { padding: 0 18px 20px; }
+
+.currentLocBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 14px;
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+}
+
+.currentLocIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--sky);
+  border: 2.5px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.currentLocText { font-size: 15px; display: block; }
+.currentLocSub { font-size: 12px; }
+
+.recentLabel { margin: 0 0 8px; font-size: 13px; }
+
+.rowBtn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 6px;
+  background: none;
+  border: none;
+  border-bottom: 1.5px solid rgba(43, 33, 24, 0.1);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.rowBtnResults { display: flex; flex-direction: column; gap: 2px; }
+.rowBtnName { font-size: 15px; display: block; }
+.rowBtnAddr { font-size: 12px; }
+
+.noResultMsg { font-size: 14px; padding: 16px 4px; }
+.noResultLink { text-decoration: underline; }
+
+.peopleChips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.addPersonBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+}
+
+.addPersonLabel { font-size: 15px; }
