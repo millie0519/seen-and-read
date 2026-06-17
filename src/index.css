@@ -53,6 +53,7 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+button { -webkit-appearance: none; color: inherit; font-family: inherit; }
 html, body { margin: 0; padding: 0; height: 100%; }
 body {
   background:

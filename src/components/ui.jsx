@@ -6,7 +6,7 @@ import {
   MdCameraAlt, MdCalendarMonth, MdLocationOn, MdChevronRight,
   MdSettings, MdDownload, MdLock, MdShare,
   MdOutlineFestival, MdStadium, MdMoreHoriz,
-  MdBookmarkBorder, MdCollectionsBookmark, MdFace,
+  MdBookmarkBorder, MdCollectionsBookmark, MdFace, MdCheck,
 } from 'react-icons/md';
 import {
   PiHouseLineFill, PiPencilLineBold, PiUserFill, PiTrashBold, PiChartBarFill,
@@ -53,6 +53,7 @@ const ICON_MAP = {
   celebration: MdOutlineFestival,
   stadium: MdStadium,
   more: MdMoreHoriz,
+  check: MdCheck,
 };
 
 function Icon({ name, size = 24, fill = 'none', style = {} }) {

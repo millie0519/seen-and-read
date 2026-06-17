@@ -2,7 +2,7 @@ import React from 'react';
 import { CATS } from '../data.js';
 import { Icon, Stars } from '../components/ui.jsx';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { saveNewRecord, updateRecord, fetchRecentPeople, touchPerson, deletePerson } from '../db/records.js';
+import { saveNewRecord, updateRecord, fetchRecentPeople, searchPeople, touchPerson, deletePerson } from '../db/records.js';
 import styles from './Record.module.css';
 
 const CAT_COLORS = {
@@ -47,7 +47,7 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
 
   const togglePerson = (name) => setPeople(ps => ps.includes(name) ? ps.filter(p => p !== name) : [...ps, name]);
 
-  const longForm   = cat === 'book' || cat === 'drama';
+  const longForm   = cat === 'book' || cat === 'drama' || cat === 'etc';
   const doneLabel  = cat === 'book' ? '완독' : cat === 'drama' ? '완주' : '봤어요';
   const STATUS_OPTS = longForm
     ? [{ k: 'done', l: doneLabel }, { k: 'watching', l: '보는 중' }, { k: 'dropped', l: '중도하차' }]
@@ -157,7 +157,7 @@ const fmtDate = (iso) => {
                   className="field-input-sm" />
               </div>
             </div>
-            <label className={styles.checkRow} onClick={() => setStillWatch(v => !v)}>
+            <label className={styles.checkRow} onClick={() => { setStillWatch(v => { if (!v) setStatus('watching'); return !v; }); }}>
               <span className={styles.checkBox} style={{ background: stillWatching ? 'var(--ink)' : '#fff' }}>
                 {stillWatching && '✓'}
               </span>
@@ -335,24 +335,28 @@ function PlaceSheet({ onClose, onPick }) {
 }
 
 function PeopleSheet({ selected, onToggle, onClose }) {
-  const [q, setQ] = React.useState('');
+  const [q, setQ]           = React.useState('');
+  const [editing, setEditing] = React.useState(false);
   const inputRef  = React.useRef(null);
   React.useEffect(() => { inputRef.current?.focus(); }, []);
 
   const recent   = useLiveQuery(fetchRecentPeople, []) ?? [];
-  const filtered = q.trim() ? recent.filter(p => p.name.includes(q.trim())) : recent;
-  const canAdd   = q.trim() && !recent.some(p => p.name === q.trim());
+  const filtered = useLiveQuery(() => q.trim() ? searchPeople(q.trim()) : fetchRecentPeople(), [q]) ?? [];
+  const canAdd   = q.trim() && !filtered.some(p => p.name === q.trim());
 
-  const handleToggle = async (name) => {
-    await touchPerson(name);
+  const handleToggle = (name) => {
     onToggle(name);
+    if (!selected.includes(name)) {
+      touchPerson(name).catch(() => {});
+      setQ('');
+    }
   };
 
   const handleAdd = async (name = q.trim()) => {
     if (!name) return;
-    await touchPerson(name);
-    if (!selected.includes(name)) onToggle(name);
     setQ('');
+    if (!selected.includes(name)) onToggle(name);
+    await touchPerson(name);
   };
 
   const handleClose = async () => {
@@ -373,16 +377,23 @@ function PeopleSheet({ selected, onToggle, onClose }) {
           </div>
           <div className={`card-flat ${styles.sheetSearchBox}`}>
             <Icon name="search" size={20} />
-            <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)} placeholder="이름 검색 또는 새로 추가"
+            <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)} placeholder="이름 검색 또는 추가"
               className="field-input" />
           </div>
         </div>
         <div className={`screen ${styles.sheetBody}`}>
           {canAdd && (
-            <button onClick={handleAdd} className={`card-flat ${styles.addPersonBtn}`}>
+            <button onClick={() => handleAdd()} className={`card-flat ${styles.addPersonBtn}`}>
               <span style={{ color: 'var(--coral-d)' }}><Icon name="plus" size={20} /></span>
-              <span className={`t-head ${styles.addPersonLabel}`}>'{q.trim()}' 새로 추가</span>
+              <span className={`t-head ${styles.addPersonLabel}`}>'{q.trim()}' 추가</span>
             </button>
+          )}
+          {recent.length > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+              <button onClick={() => setEditing(v => !v)} className="btn-reset muted" style={{ fontSize: 13, textDecoration: 'underline' }}>
+                {editing ? '완료' : '최근 검색어 삭제'}
+              </button>
+            </div>
           )}
           <div className={styles.peopleChips}>
             {filtered.map((p, i) => {
@@ -390,10 +401,12 @@ function PeopleSheet({ selected, onToggle, onClose }) {
               return (
                 <button key={i} onClick={() => handleToggle(p.name)} className={`filter-btn ${styles.peopleChipWrap}`}>
                   <span className="pill pill-xl" style={{ background: on ? 'var(--mint)' : undefined, boxShadow: on ? 'var(--shadow-sm)' : 'none' }}>
-                    {on && <Icon name="bookmark" size={15} />}{p.name}
-                    <span className={styles.peopleChipDel} onClick={e => { e.stopPropagation(); deletePerson(p.name); }}>
-                      <Icon name="close" size={18} />
-                    </span>
+                    {on && <Icon name="check" size={15} />}{p.name}
+                    {editing && (
+                      <span className={styles.peopleChipDel} onClick={e => { e.stopPropagation(); if (selected.includes(p.name)) onToggle(p.name); deletePerson(p.name); }}>
+                        <Icon name="close" size={18} />
+                      </span>
+                    )}
                   </span>
                 </button>
               );

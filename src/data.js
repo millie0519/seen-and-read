@@ -3,7 +3,7 @@
 const CATS = {
   book:     { ko: '책',          en: 'Book',     icon: 'book',        color: 'var(--coral)' },
   movie:    { ko: '영화',        en: 'Movie',    icon: 'film',        color: 'var(--sky)' },
-  drama:    { ko: '드라마',      en: 'Drama',    icon: 'tv',          color: 'var(--grape)' },
+  drama:    { ko: '시리즈',      en: 'Series',   icon: 'tv',          color: 'var(--grape)' },
   exhibit:  { ko: '전시',        en: 'Exhibit',  icon: 'frame',       color: 'var(--yellow)' },
   stage:    { ko: '연극/뮤지컬', en: 'Stage',    icon: 'mask',        color: 'var(--pink)' },
   concert:  { ko: '음악',        en: 'Concert',  icon: 'music',       color: 'var(--coral-d)' },

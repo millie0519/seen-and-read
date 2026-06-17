@@ -88,7 +88,7 @@ function HomeScreen({ onOpen, onSearch }) {
         </button>
         {Object.keys(CATS).map(k => (
           <button key={k} onClick={() => setActiveCat(k)} className="filter-btn">
-            <CatChip cat={k} />
+            <CatChip cat={k} solid={activeCat === k} />
           </button>
         ))}
       </div>

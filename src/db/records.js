@@ -271,6 +271,10 @@ export async function fetchRecentPeople() {
   return db.people.orderBy('used_at').reverse().limit(10).toArray();
 }
 
+export async function searchPeople(q) {
+  return db.people.orderBy('used_at').reverse().filter(p => p.name.includes(q)).toArray();
+}
+
 export async function touchPerson(name) {
   const existing = await db.people.where('name').equals(name).first();
   if (existing) {
