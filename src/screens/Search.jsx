@@ -17,7 +17,7 @@ function SearchScreen({ onClose, onOpen }) {
 
   const results = records.filter(r => {
     const inCat  = cat === 'all' || r.cat === cat;
-    const text   = [r.title, r.creator, ...(r.tags || []), r.place, r.note].filter(Boolean).join(' ').toLowerCase();
+    const text   = [r.title, r.creator, r.place, r.note].filter(Boolean).join(' ').toLowerCase();
     const inQ    = !q.trim() || text.includes(q.trim().toLowerCase());
     return inCat && inQ;
   });
@@ -39,12 +39,12 @@ function SearchScreen({ onClose, onOpen }) {
 
       <div className={styles.filterRow}>
         <button onClick={() => setCat('all')} className="filter-btn">
-          <span className="pill" style={{ background: cat === 'all' ? 'var(--ink)' : '#fff', color: cat === 'all' ? '#fff' : 'var(--ink)' }}>전체</span>
+          <span className="pill" style={{ background: cat === 'all' ? 'var(--ink)' : undefined, color: cat === 'all' ? '#fff' : 'var(--ink)' }}>전체</span>
         </button>
         {Object.keys(CATS).map(k => (
           <button key={k} onClick={() => setCat(k)} className="filter-btn">
             <span className="pill" style={{
-              background: cat === k ? CATS[k].color : '#fff',
+              background: cat === k ? CATS[k].color : undefined,
               color: cat === k && k !== 'movie' && k !== 'exhibit' ? '#fff' : 'var(--ink)',
             }}>
               <Icon name={CATS[k].icon} size={15} />{CATS[k].ko}

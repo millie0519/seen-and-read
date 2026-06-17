@@ -1,13 +1,15 @@
 // data.jsx — sample records + category meta for the prototype
 
 const CATS = {
-  book:    { ko: '책',     en: 'Book',     icon: 'book',    color: 'var(--coral)' },
-  movie:   { ko: '영화',   en: 'Movie',    icon: 'film',    color: 'var(--sky)' },
-  drama:   { ko: '드라마', en: 'Drama',    icon: 'tv',      color: 'var(--grape)' },
-  ott:     { ko: 'OTT',    en: 'OTT',      icon: 'play',    color: 'var(--mint)' },
-  exhibit: { ko: '전시',   en: 'Exhibit',  icon: 'frame',   color: 'var(--yellow)' },
-  musical: { ko: '뮤지컬', en: 'Musical',  icon: 'mask',    color: 'var(--pink)' },
-  play:    { ko: '연극',   en: 'Play',     icon: 'ticket',  color: 'var(--coral-d)' },
+  book:     { ko: '책',          en: 'Book',     icon: 'book',        color: 'var(--coral)' },
+  movie:    { ko: '영화',        en: 'Movie',    icon: 'film',        color: 'var(--sky)' },
+  drama:    { ko: '드라마',      en: 'Drama',    icon: 'tv',          color: 'var(--grape)' },
+  exhibit:  { ko: '전시',        en: 'Exhibit',  icon: 'frame',       color: 'var(--yellow)' },
+  stage:    { ko: '연극/뮤지컬', en: 'Stage',    icon: 'mask',        color: 'var(--pink)' },
+  concert:  { ko: '음악',        en: 'Concert',  icon: 'music',       color: 'var(--coral-d)' },
+  sports:   { ko: '스포츠',      en: 'Sports',   icon: 'stadium',     color: 'var(--sky-d)' },
+  festival: { ko: '축제',        en: 'Festival', icon: 'celebration', color: 'var(--mint)' },
+  etc:      { ko: '기타',        en: 'Etc',      icon: 'more',        color: 'var(--ink-soft)' },
 };
 
 // cover = solid placeholder color (real art comes from API later)
@@ -60,7 +62,7 @@ const FEED = [
     quote: null, tags: ['한국문학'], with: null,
   },
   {
-    id: 'r5', cat: 'musical', title: '하데스타운', creator: '블루스퀘어',
+    id: 'r5', cat: 'stage', title: '하데스타운', creator: '블루스퀘어',
     cover: '#B5483C', coverFg: '#FBBE2C', date: '5월 18일', when: '5월 18일 · 오후 3:00',
     status: 'done', times: 3,
     rating: 5, place: '블루스퀘어 신한카드홀',
@@ -72,8 +74,8 @@ const FEED = [
 // library shelves
 const SHELF_COUNTS = [
   { cat: 'book', n: 89 }, { cat: 'movie', n: 64 }, { cat: 'drama', n: 38 },
-  { cat: 'ott', n: 22 }, { cat: 'exhibit', n: 18 }, { cat: 'musical', n: 9 },
-  { cat: 'play', n: 5 },
+  { cat: 'exhibit', n: 18 }, { cat: 'stage', n: 14 },
+  { cat: 'concert', n: 0 }, { cat: 'festival', n: 0 }, { cat: 'sports', n: 0 }, { cat: 'etc', n: 0 },
 ];
 
 const SHELF_BOOKS = [

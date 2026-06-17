@@ -140,6 +140,8 @@
   color: var(--ink);
   min-width: 0;
   box-sizing: border-box;
+  resize: none;
+  line-height: 1.6;
 }
 
 .quoteLbl { margin-bottom: 8px; }
@@ -253,6 +255,12 @@
 .noResultLink { text-decoration: underline; }
 
 .peopleChips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.peopleChipWrap { position: relative; display: inline-flex; }
+.peopleChipDel {
+  width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
 
 .addPersonBtn {
   display: flex;

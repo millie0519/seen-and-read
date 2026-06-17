@@ -35,14 +35,14 @@ function LibraryScreen({ onOpen, onSearch }) {
       <div className={styles.filterRow}>
         <button onClick={() => setActive('all')} className="filter-btn">
           <span className="pill" style={{
-            background: active === 'all' ? 'var(--ink)' : '#fff',
+            background: active === 'all' ? 'var(--ink)' : undefined,
             color: active === 'all' ? '#fff' : 'var(--ink)',
           }}>전체 {total}</span>
         </button>
         {shelfCounts.map(({ cat, n }) => (
           <button key={cat} onClick={() => setActive(cat)} className="filter-btn">
             <span className="pill" style={{
-              background: active === cat ? CATS[cat].color : '#fff',
+              background: active === cat ? CATS[cat].color : undefined,
               color: active === cat && cat !== 'movie' && cat !== 'exhibit' ? '#fff' : 'var(--ink)',
             }}>
               <Icon name={CATS[cat].icon} size={15} />{CATS[cat].ko} {n}

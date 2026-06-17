@@ -211,7 +211,6 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
             <h2 className={`t-display ${styles.heroTitle}`}>{rec.title}</h2>
             <div className={`muted ${styles.heroCreator}`}>{rec.creator}</div>
             <div className={styles.heroStars}><Stars value={rec.rating} size={19} gap={3} /></div>
-            {statusPills(rec).length > 0 && <div className={styles.heroStatus}><StatusPills rec={rec} size={13} /></div>}
             <div className={styles.metaRows}>
               {rec.span ? (
                 <div className={styles.metaRow}>
@@ -234,7 +233,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
                 </div>
               )}
               <div className={styles.metaRowCenter}>
-                <span className={styles.metaIconCenter}><Icon name="user" size={16} /></span>
+                <span className={styles.metaIconCenter}><Icon name="face" size={16} /></span>
                 <span className={styles.metaText}>{rec.with || '혼자'}</span>
               </div>
             </div>
@@ -242,20 +241,12 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
         </div>
 
         <div className={styles.detailBody}>
-          {rec.tags?.length > 0 && (
-            <div className={styles.tagsRow}>
-              {rec.tags.map((tag, i) => (
-                <span key={i} className="pill" style={{ background: 'var(--sky)', fontSize: 12, padding: '4px 10px' }}>#{tag}</span>
-              ))}
+          {rec.quotes?.map((q, i) => (
+            <div key={i} className={styles.quoteCard}>
+              <span className={styles.quoteAccent}><Icon name="quote" size={30} style={{ transform: 'rotate(180deg)' }} /></span>
+              <div className={styles.quoteCardText}>{q}</div>
             </div>
-          )}
-
-          {rec.quote && (
-            <div className={styles.quoteCard}>
-              <div className={`t-head ${styles.quoteCardLabel}`}>" 인용 "</div>
-              <div className={styles.quoteCardText}>{rec.quote}</div>
-            </div>
-          )}
+          ))}
 
           {rec.note && <p className={styles.noteText}>{rec.note}</p>}
 
@@ -263,7 +254,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
             <div className={styles.timeline}>
               <div className={styles.timelineHeader}>
                 <h3 className={`t-head ${styles.timelineTitle}`}>이 작품을 본 기록</h3>
-                <span className="pill" style={{ fontSize: 12, padding: '3px 10px', background: 'var(--status-times)' }}>{rec.logs.length}번</span>
+                <span className="pill pill-xs" style={{ background: 'var(--status-times)' }}>{rec.logs.length}번</span>
               </div>
               <div className={styles.timelineTrack}>
                 <div className={styles.timelineLine} />

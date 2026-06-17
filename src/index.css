@@ -26,6 +26,7 @@
   --pink:   #F2A1BE;     /* Featured badge */
   --pink-d: #E47D9E;
   --mint:   #7FBFA0;
+  --green:  #4E7C59;
   --grape:  #B0A4DE;
 
   /* Status colors — fixed, NOT themeable (independent of accent tweak) */
@@ -105,11 +106,13 @@ body {
 
 /* ── Pills / badges ── */
 .pill {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: flex-end; gap: 5px; height: 30px;
   border: var(--line-thin); border-radius: 999px;
-  padding: 5px 11px; font-family: var(--font-head); font-size: 13px;
-  background: #fff; white-space: nowrap; line-height: 1;
+  padding: 5px 12px; font-family: var(--font-head); font-size: 13px;
+  background: #fff; white-space: nowrap; line-height: 1; box-sizing: border-box;
 }
+.pill-xs { font-size: 12px; padding: 3px 10px; height: auto; }
+.pill-xl { font-size: 14px; padding: 8px 14px; height: auto; }
 .badge-feat {
   font-family: var(--font-head); font-size: 12px;
   background: var(--pink); border: var(--line-thin);
@@ -191,8 +194,9 @@ body {
   flex: 1;
   border: none; outline: none; background: transparent;
   font-family: var(--font-body); font-size: 14px; color: var(--ink);
-  min-width: 0;
+  min-width: 0; cursor: pointer;
 }
+.field-input-sm::-webkit-calendar-picker-indicator { opacity: 0; cursor: pointer; }
 
 .textarea-field {
   width: 100%;
@@ -203,7 +207,7 @@ body {
 
 /* ── Shared horizontal filter row ── */
 .filter-row {
-  display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
+  display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none;
 }
 .filter-row::-webkit-scrollbar { display: none; }
 

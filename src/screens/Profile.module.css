@@ -223,17 +223,15 @@
 .tagsRow { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 
 .quoteCard {
+  position: relative;
   margin: 0 0 16px;
-  background: var(--yellow);
-  border: 2.5px solid var(--ink);
-  border-radius: 16px;
   padding: 14px 16px;
-  box-shadow: var(--shadow-sm);
+  background-color: #fff;
+  border-radius: 16px;
+  border: 2px solid var(--ink-soft);
 }
-
-.quoteCardLabel { font-size: 12px; color: var(--coral-d); margin-bottom: 4px; }
-.quoteCardText { font-size: 16px; line-height: 1.5; font-style: italic; }
-
+.quoteCardText { font-size: 14px; line-height: 1.5; font-style: italic; white-space: pre-wrap; }
+.quoteAccent { position: absolute; top: 0; left: 0; color: var(--coral); opacity: 0.6; }
 .noteText { font-size: 15px; line-height: 1.6; white-space: pre-line; margin: 0 0 18px; }
 
 /* Timeline */

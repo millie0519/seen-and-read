@@ -32,36 +32,28 @@ function FeedPost({ rec, onOpen }) {
         </div>
       </div>
 
-      <div className={styles.feedActions}>
-        <div className={styles.feedActionSpacer} />
-        <button onClick={(e) => { e.stopPropagation(); setSaved(v => !v); }} className="btn-reset">
-          <span style={{ color: saved ? 'var(--coral)' : 'var(--ink)' }}>
-            <Icon name="bookmark" size={24} fill={saved ? 'var(--coral)' : 'none'} />
-          </span>
-        </button>
-      </div>
-
       <div className={styles.caption}>
-        <div className={styles.captionText}>
+        <div className={styles.captionTop}>
           <span className={`t-head ${styles.captionTitle}`}>{rec.title}</span>
+          <div className={styles.rgt}>
+            <button onClick={(e) => { e.stopPropagation(); setSaved(v => !v); }} className="btn-reset">
+              <Icon name={saved ? 'bookmark' : 'bookmarkBorder'} size={24} fill={saved ? 'var(--green)' : 'none'} />
+            </button>
+          </div>
+        </div>
+        <div className={styles.captionText}>
           {rec.creator && <span className={`muted ${styles.captionCreator}`}>· {rec.creator}</span>}
-          <br />{rec.note}
+          {rec.note && <p className={styles.captionNote}>{rec.note}</p>}
         </div>
         {rec.quote && (
           <div className={styles.quoteBox}>
-            <span className={styles.quoteAccent}>" </span>
+            <span className={styles.quoteAccent}><Icon name="quote" size={14} style={{ transform: 'rotate(180deg)' }} /> </span>
             {rec.quote}
-            <span className={styles.quoteAccent}> "</span>
           </div>
         )}
       </div>
 
-      {rec.with && (
-        <div className={styles.withLine}>
-          <span className={`t-head ${styles.withText}`}>함께 · {rec.with}</span>
-        </div>
-      )}
-      {!rec.with && <div className={styles.spacer} />}
+      <div className={styles.spacer} />
     </article>
   );
 }
@@ -90,7 +82,7 @@ function HomeScreen({ onOpen, onSearch }) {
       <div className={styles.filterRow}>
         <button onClick={() => setActiveCat('all')} className="filter-btn">
           <span className="pill" style={{
-            background: activeCat === 'all' ? 'var(--ink)' : '#fff',
+            background: activeCat === 'all' ? 'var(--ink)' : undefined,
             color: activeCat === 'all' ? '#fff' : 'var(--ink)',
           }}>전체</span>
         </button>

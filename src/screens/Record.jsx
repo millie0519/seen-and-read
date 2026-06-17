@@ -1,17 +1,20 @@
 import React from 'react';
 import { CATS } from '../data.js';
 import { Icon, Stars } from '../components/ui.jsx';
-import { saveNewRecord, updateRecord } from '../db/records.js';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { saveNewRecord, updateRecord, fetchRecentPeople, touchPerson, deletePerson } from '../db/records.js';
 import styles from './Record.module.css';
 
 const CAT_COLORS = {
-  book:    { cover: '#E9DCC0', coverFg: '#221C14' },
-  movie:   { cover: '#C97A4A', coverFg: '#fff' },
-  drama:   { cover: '#7E6BA8', coverFg: '#fff' },
-  ott:     { cover: '#7FBFA0', coverFg: '#fff' },
-  exhibit: { cover: '#5E6B5A', coverFg: '#fff' },
-  musical: { cover: '#B5483C', coverFg: '#FBBE2C' },
-  play:    { cover: '#3E5C8A', coverFg: '#fff' },
+  book:     { cover: '#E9DCC0', coverFg: '#221C14' },
+  movie:    { cover: '#C97A4A', coverFg: '#fff' },
+  drama:    { cover: '#7E6BA8', coverFg: '#fff' },
+  exhibit:  { cover: '#5E6B5A', coverFg: '#fff' },
+  stage:    { cover: '#B5483C', coverFg: '#FBBE2C' },
+  concert:  { cover: '#C97A7A', coverFg: '#fff' },
+  sports:   { cover: '#6E80D8', coverFg: '#fff' },
+  festival: { cover: '#7FBFA0', coverFg: '#221C14' },
+  etc:      { cover: '#8A7F72', coverFg: '#fff' },
 };
 
 const isISODate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -26,9 +29,7 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
   const [status, setStatus]             = React.useState(initialRec?.status ?? 'done');
   const [times, setTimes]               = React.useState(initialRec?.times ?? 1);
   const [note, setNote]                 = React.useState(initialRec?.note ?? '');
-  const [quotes, setQuotes]             = React.useState(initialRec?.quote ? [initialRec.quote] : ['']);
-  const [tags, setTags]                 = React.useState(initialRec?.tags ?? []);
-  const [tagInput, setTagInput]         = React.useState('');
+  const [quotes, setQuotes]             = React.useState(initialRec?.quotes?.length ? initialRec.quotes : ['']);
   const [startDate, setStartDate]       = React.useState(isISODate(initialRec?.span?.start) ? initialRec.span.start : '');
   const [endDate, setEndDate]           = React.useState(isISODate(initialRec?.span?.end) ? initialRec.span.end : '');
   const [stillWatching, setStillWatch]  = React.useState(initialRec?.span ? !initialRec.span.end : false);
@@ -39,21 +40,27 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
   const [sheet, setSheet]               = React.useState(null);
   const [saving, setSaving]             = React.useState(false);
 
+  const startDateRef = React.useRef(null);
+  const endDateRef   = React.useRef(null);
+  const singleDateRef = React.useRef(null);
+  const openPicker = (ref) => { try { ref.current?.showPicker(); } catch { ref.current?.click(); } };
+
   const togglePerson = (name) => setPeople(ps => ps.includes(name) ? ps.filter(p => p !== name) : [...ps, name]);
 
-  const longForm   = cat === 'book' || cat === 'drama' || cat === 'ott';
+  const longForm   = cat === 'book' || cat === 'drama';
+  const doneLabel  = cat === 'book' ? '완독' : cat === 'drama' ? '완주' : '봤어요';
   const STATUS_OPTS = longForm
-    ? [{ k: 'done', l: '완독' }, { k: 'watching', l: '보는 중' }, { k: 'dropped', l: '중도하차' }]
-    : [{ k: 'done', l: '봤어요' }, { k: 'dropped', l: '중도하차' }];
+    ? [{ k: 'done', l: doneLabel }, { k: 'watching', l: '보는 중' }, { k: 'dropped', l: '중도하차' }]
+    : [{ k: 'done', l: doneLabel }, { k: 'dropped', l: '중도하차' }];
 
   const addQuote    = () => setQuotes(qs => [...qs, '']);
   const removeQuote = (i) => setQuotes(qs => qs.filter((_, j) => j !== i));
   const updateQuote = (i, val) => setQuotes(qs => qs.map((q, j) => j === i ? val : q));
 
-  const addTag = () => {
-    const t = tagInput.trim().replace(/^#/, '');
-    if (t && !tags.includes(t)) setTags(ts => [...ts, t]);
-    setTagInput('');
+const fmtDate = (iso) => {
+    if (!iso) return null;
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
   const handleSave = async () => {
@@ -67,14 +74,14 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
         creator: creator.trim() || null,
         status, times, rating,
         note:    note.trim() || null,
-        quote:   quotes.filter(q => q.trim())[0] || null,
-        tags,
+        quotes:  quotes.filter(q => q.trim()),
+        tags:    [],
         with:    people.length ? people.join(', ') : null,
         place:   place || null,
         ...(longForm ? {
           span: {
-            start: startDate || now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }),
-            end:   stillWatching ? null : (endDate || now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })),
+            start: fmtDate(startDate) || now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }),
+            end:   stillWatching ? null : (fmtDate(endDate) || now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })),
             days:  null,
           },
         } : {
@@ -110,11 +117,10 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
         <div className={styles.catRow}>
           {Object.keys(CATS).map(k => (
             <button key={k} onClick={() => setCat(k)} className={styles.catBtn}>
-              <span className="pill" style={{
-                background: cat === k ? CATS[k].color : '#fff',
-                color: cat === k && k !== 'movie' && k !== 'exhibit' ? '#fff' : 'var(--ink)',
+              <span className="pill pill-xl" style={{
+                background: cat === k ? CATS[k].color : undefined,
+                color: cat === k && k !== 'movie' && k !== 'exhibit' && k !== 'festival' ? '#fff' : 'var(--ink)',
                 boxShadow: cat === k ? 'var(--shadow-sm)' : 'none',
-                fontSize: 14, padding: '7px 13px',
               }}>
                 <Icon name={CATS[k].icon} size={16} />{CATS[k].ko}
               </span>
@@ -137,17 +143,17 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
 
         {longForm ? (
           <>
-            <label className={`t-head ${styles.lbl}`}>언제 보기 시작 → 끝냈어요?</label>
+            <label className={`t-head ${styles.lbl}`}>기간</label>
             <div className={styles.dateRow}>
-              <div className={`card-flat ${styles.dateField}`}>
+              <div className={`card-flat ${styles.dateField}`} onClick={() => openPicker(startDateRef)}>
                 <Icon name="calendar" size={18} />
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+                <input ref={startDateRef} type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
                   className="field-input-sm" />
               </div>
-              <span className={`t-head ${styles.dateArrow}`}>→</span>
-              <div className={`card-flat ${styles.dateField}`} style={{ opacity: stillWatching ? 0.4 : 1 }}>
+              <span className={`t-head ${styles.dateArrow}`}>~</span>
+              <div className={`card-flat ${styles.dateField}`} style={{ opacity: stillWatching ? 0.4 : 1 }} onClick={() => !stillWatching && openPicker(endDateRef)}>
                 <Icon name="calendar" size={18} />
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} disabled={stillWatching}
+                <input ref={endDateRef} type="date" value={endDate} onChange={e => setEndDate(e.target.value)} disabled={stillWatching}
                   className="field-input-sm" />
               </div>
             </div>
@@ -161,9 +167,9 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
         ) : (
           <>
             <label className={`t-head ${styles.lbl}`}>언제 봤어요?</label>
-            <div className={`card-flat ${styles.inputBoxGap}`}>
+            <div className={`card-flat ${styles.inputBoxGap}`} onClick={() => openPicker(singleDateRef)}>
               <Icon name="calendar" size={18} />
-              <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+              <input ref={singleDateRef} type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
                 className="field-input" />
             </div>
           </>
@@ -176,13 +182,12 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
             const bg = o.k === 'dropped' ? 'var(--status-dropped)' : o.k === 'watching' ? 'var(--status-watching)' : 'var(--status-done)';
             return (
               <button key={o.k} onClick={() => setStatus(o.k)} className={styles.statusBtn}>
-                <span className="pill" style={{
-                  background: on ? bg : '#fff',
+                <span className="pill pill-xl" style={{
+                  background: on ? bg : undefined,
                   color: on && o.k === 'dropped' ? '#fff' : 'var(--ink)',
                   boxShadow: on ? 'var(--shadow-sm)' : 'none',
-                  fontSize: 14, padding: '7px 14px',
                 }}>
-                  {o.k === 'done' && <Icon name="bookmark" size={15} />}{o.l}
+                  {o.k === 'done' && <Icon name="collectionsBookmark" size={15} />}{o.l}
                 </span>
               </button>
             );
@@ -208,33 +213,10 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
           </span>
         </div>
 
-        <label className={`t-head ${styles.lbl}`}>태그</label>
-        {tags.length > 0 && (
-          <div className={styles.tagsRow}>
-            {tags.map((tag, i) => (
-              <span key={i} className="pill" style={{ background: 'var(--sky)', fontSize: 13, padding: '5px 10px' }}>
-                #{tag}
-                <button onClick={() => setTags(ts => ts.filter((_, j) => j !== i))} className={`btn-reset ${styles.tagClose}`}>
-                  <Icon name="close" size={12} />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-        <div className={`card-flat ${styles.tagInputBox}`}>
-          <input value={tagInput} onChange={e => setTagInput(e.target.value)}
-            onKeyDown={e => { if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) { e.preventDefault(); addTag(); } }}
-            placeholder="태그 입력 후 Enter (예: SF, 재관람각)"
-            className="field-input-sm" />
-          {tagInput.trim() && (
-            <button onClick={addTag} className="pill" style={{ cursor: 'pointer', padding: '4px 10px', fontSize: 12, background: 'var(--sky)', border: 'none', flexShrink: 0 }}>추가</button>
-          )}
-        </div>
-
-        <label className={`t-head ${styles.lbl}`}>한 줄 느낌</label>
+        <label className={`t-head ${styles.lbl}`}>감상</label>
         <div className={`card-flat ${styles.noteBox}`}>
-          <input value={note} onChange={e => setNote(e.target.value)} placeholder="오래 남을 한 마디…"
-            className={styles.noteInput} />
+          <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="오래 남을 한 마디…"
+            rows={3} className={styles.noteInput} />
         </div>
 
         <label className={`t-head ${styles.lbl} ${styles.quoteLbl}`}>
@@ -243,7 +225,7 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
         <div className={styles.quotesStack}>
           {quotes.map((qt, i) => (
             <div key={i} className={`card-flat ${styles.quoteItem}`}>
-              <span className={`t-display ${styles.quoteAccent}`}>"</span>
+              <span className={styles.quoteAccent}><Icon name="quote" size={18} style={{ transform: 'rotate(180deg)' }} /></span>
               <textarea value={qt} onChange={e => updateQuote(i, e.target.value)} placeholder="문장을 입력하세요…" rows={2}
                 className={styles.quoteTextarea} />
               {quotes.length > 1 && (
@@ -252,19 +234,19 @@ function RecordScreen({ rec: initialRec, onClose, onSaved }) {
             </div>
           ))}
         </div>
-        <button onClick={addQuote} className="pill" style={{ cursor: 'pointer', padding: '8px 14px', marginBottom: 18, background: '#fff' }}>
+        <button onClick={addQuote} className="pill pill-xl" style={{ cursor: 'pointer', marginBottom: 18 }}>
           <Icon name="plus" size={15} />인용 추가
         </button>
 
         <label className={`t-head ${styles.lbl}`}>기록에 더하기</label>
         <div className={styles.attachRow}>
-          <span className="pill" style={{ background: 'var(--yellow)', padding: '9px 14px', cursor: 'pointer' }}><Icon name="camera" size={17} />사진</span>
+          <span className="pill pill-xl" style={{ background: 'var(--yellow)', cursor: 'pointer' }}><Icon name="camera" size={17} />사진</span>
           <button onClick={() => setSheet('place')} className="filter-btn">
-            <span className="pill" style={{ padding: '9px 14px', background: place ? 'var(--mint)' : '#fff' }}><Icon name="pin" size={17} />{place || '장소'}</span>
+            <span className="pill pill-xl" style={{ background: place ? 'var(--mint)' : undefined }}><Icon name="pin" size={17} />{place || '장소'}</span>
           </button>
           <button onClick={() => setSheet('people')} className="filter-btn">
-            <span className="pill" style={{ padding: '9px 14px', background: people.length ? 'var(--mint)' : '#fff' }}>
-              <Icon name="user" size={17} />{people.length ? people.join(', ') : '함께 본 사람'}
+            <span className="pill pill-xl" style={{ background: people.length ? 'var(--mint)' : undefined }}>
+              <Icon name="face" size={17} />{people.length ? people.join(', ') : '함께 본 사람'}
             </span>
           </button>
         </div>
@@ -353,16 +335,33 @@ function PlaceSheet({ onClose, onPick }) {
 }
 
 function PeopleSheet({ selected, onToggle, onClose }) {
-  const [q, setQ]    = React.useState('');
-  const inputRef     = React.useRef(null);
+  const [q, setQ] = React.useState('');
+  const inputRef  = React.useRef(null);
   React.useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const saved    = ['엄마', '지현', '회사 동료', '동생', '친구 둘'];
-  const filtered = q.trim() ? saved.filter(s => s.includes(q.trim())) : saved;
-  const canAdd   = q.trim() && !saved.includes(q.trim());
+  const recent   = useLiveQuery(fetchRecentPeople, []) ?? [];
+  const filtered = q.trim() ? recent.filter(p => p.name.includes(q.trim())) : recent;
+  const canAdd   = q.trim() && !recent.some(p => p.name === q.trim());
+
+  const handleToggle = async (name) => {
+    await touchPerson(name);
+    onToggle(name);
+  };
+
+  const handleAdd = async (name = q.trim()) => {
+    if (!name) return;
+    await touchPerson(name);
+    if (!selected.includes(name)) onToggle(name);
+    setQ('');
+  };
+
+  const handleClose = async () => {
+    if (q.trim()) await handleAdd();
+    onClose();
+  };
 
   return (
-    <div className="sheet-back" onClick={onClose}>
+    <div className="sheet-back" onClick={handleClose}>
       <div onClick={e => e.stopPropagation()} className="sheet-inner">
         <div className="sheet-handle-row">
           <div className="sheet-handle" />
@@ -370,7 +369,7 @@ function PeopleSheet({ selected, onToggle, onClose }) {
         <div className={styles.sheetHeader}>
           <div className={styles.sheetHeaderRow}>
             <span className={`t-display ${styles.sheetTitle}`}>함께 본 사람</span>
-            <button onClick={onClose} className="btn btn-coral" style={{ padding: '8px 16px', fontSize: 14 }}>완료</button>
+            <button onClick={handleClose} className="btn btn-coral" style={{ padding: '8px 16px', fontSize: 14 }}>완료</button>
           </div>
           <div className={`card-flat ${styles.sheetSearchBox}`}>
             <Icon name="search" size={20} />
@@ -380,18 +379,21 @@ function PeopleSheet({ selected, onToggle, onClose }) {
         </div>
         <div className={`screen ${styles.sheetBody}`}>
           {canAdd && (
-            <button onClick={() => { onToggle(q.trim()); setQ(''); }} className={`card-flat ${styles.addPersonBtn}`}>
+            <button onClick={handleAdd} className={`card-flat ${styles.addPersonBtn}`}>
               <span style={{ color: 'var(--coral-d)' }}><Icon name="plus" size={20} /></span>
               <span className={`t-head ${styles.addPersonLabel}`}>'{q.trim()}' 새로 추가</span>
             </button>
           )}
           <div className={styles.peopleChips}>
-            {filtered.map((name, i) => {
-              const on = selected.includes(name);
+            {filtered.map((p, i) => {
+              const on = selected.includes(p.name);
               return (
-                <button key={i} onClick={() => onToggle(name)} className="filter-btn">
-                  <span className="pill" style={{ background: on ? 'var(--mint)' : '#fff', fontSize: 15, padding: '9px 15px', boxShadow: on ? 'var(--shadow-sm)' : 'none' }}>
-                    {on && <Icon name="bookmark" size={15} />}{name}
+                <button key={i} onClick={() => handleToggle(p.name)} className={`filter-btn ${styles.peopleChipWrap}`}>
+                  <span className="pill pill-xl" style={{ background: on ? 'var(--mint)' : undefined, boxShadow: on ? 'var(--shadow-sm)' : 'none' }}>
+                    {on && <Icon name="bookmark" size={15} />}{p.name}
+                    <span className={styles.peopleChipDel} onClick={e => { e.stopPropagation(); deletePerson(p.name); }}>
+                      <Icon name="close" size={18} />
+                    </span>
                   </span>
                 </button>
               );

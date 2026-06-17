@@ -9,20 +9,19 @@ function relativeDate(ts) {
   const dayMs   = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
   if (dayMs === todayMs) return '오늘';
   if (dayMs === todayMs - 86400000) return '어제';
-  return d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+  return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 function whenString(ts) {
   const d = new Date(ts);
-  return d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })
-    + ' · ' + d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+  return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 // ── 뷰 빌더 ──────────────────────────────────────────────────
 // DB 행(log + title + quotes + siblings)을 UI RecordView 객체로 변환
 
 function buildView(log, title, quotes, siblings) {
-  const longForm = ['book', 'drama', 'ott'].includes(title.category);
+  const longForm = ['book', 'drama'].includes(title.category);
 
   const view = {
     id:       log.id,
@@ -39,7 +38,8 @@ function buildView(log, title, quotes, siblings) {
     note:     log.one_liner || null,
     with:     log.companions?.length ? log.companions.join(', ') : null,
     tags:     log.tags    || [],
-    quote:    quotes[0]?.text || null,
+    quote:    quotes.sort((a,b) => (a.seq??0)-(b.seq??0))[0]?.text || null,
+    quotes:   quotes.sort((a,b) => (a.seq??0)-(b.seq??0)).map(q => q.text),
     when:     whenString(log.created_at),
     date:     relativeDate(log.created_at),
   };
@@ -132,22 +132,24 @@ export async function fetchRecordView(logId) {
 // ── 카테고리 색상 ─────────────────────────────────────────────
 
 const CAT_COLORS = {
-  book:    { cover_color: '#E9DCC0', cover_fg: '#221C14' },
-  movie:   { cover_color: '#C97A4A', cover_fg: '#fff' },
-  drama:   { cover_color: '#7E6BA8', cover_fg: '#fff' },
-  ott:     { cover_color: '#7FBFA0', cover_fg: '#fff' },
-  exhibit: { cover_color: '#5E6B5A', cover_fg: '#fff' },
-  musical: { cover_color: '#B5483C', cover_fg: '#FBBE2C' },
-  play:    { cover_color: '#3E5C8A', cover_fg: '#fff' },
+  book:     { cover_color: '#E9DCC0', cover_fg: '#221C14' },
+  movie:    { cover_color: '#C97A4A', cover_fg: '#fff' },
+  drama:    { cover_color: '#7E6BA8', cover_fg: '#fff' },
+  exhibit:  { cover_color: '#5E6B5A', cover_fg: '#fff' },
+  stage:    { cover_color: '#B5483C', cover_fg: '#FBBE2C' },
+  concert:  { cover_color: '#C97A7A', cover_fg: '#fff' },
+  festival: { cover_color: '#7FBFA0', cover_fg: '#221C14' },
+  sports:   { cover_color: '#6E80D8', cover_fg: '#fff' },
+  etc:      { cover_color: '#8A7F72', cover_fg: '#fff' },
 };
 
 // ── 쓰기 ─────────────────────────────────────────────────────
 
 // RecordScreen handleSave의 base 객체를 받아 DB에 저장
 export async function saveNewRecord(base) {
-  const { cat, title, creator, status, rating, note, quote, tags, with: withStr, place, span, dateSingle } = base;
+  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle } = base;
   const colors   = CAT_COLORS[cat] || {};
-  const longForm = ['book', 'drama', 'ott'].includes(cat);
+  const longForm = ['book', 'drama'].includes(cat);
   const now      = Date.now();
   const titleId  = crypto.randomUUID();
   const logId    = crypto.randomUUID();
@@ -184,8 +186,9 @@ export async function saveNewRecord(base) {
       created_at:  now,
     });
 
-    if (quote?.trim()) {
-      await db.quotes.add({ id: crypto.randomUUID(), log_id: logId, text: quote.trim(), page: null });
+    let seq = 0;
+    for (const q of (quotes || [])) {
+      if (q?.trim()) await db.quotes.add({ id: crypto.randomUUID(), log_id: logId, text: q.trim(), seq: seq++, page: null });
     }
   });
 }
@@ -195,9 +198,9 @@ export async function updateRecord(logId, patch) {
   const log = await db.logs.get(logId);
   if (!log) return;
 
-  const { cat, title, creator, status, rating, note, quote, tags, with: withStr, place, span, dateSingle } = patch;
+  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle } = patch;
   const colors   = cat ? CAT_COLORS[cat] : {};
-  const longForm = ['book', 'drama', 'ott'].includes(cat);
+  const longForm = ['book', 'drama'].includes(cat);
 
   await db.transaction('rw', db.titles, db.logs, db.quotes, async () => {
     const titlePatch = {
@@ -221,12 +224,10 @@ export async function updateRecord(logId, patch) {
       date_end:    longForm ? (span?.end   || null) : null,
     });
 
-    const existing = await db.quotes.where('log_id').equals(logId).toArray();
-    if (quote?.trim()) {
-      if (existing.length) await db.quotes.update(existing[0].id, { text: quote.trim() });
-      else await db.quotes.add({ id: crypto.randomUUID(), log_id: logId, text: quote.trim(), page: null });
-    } else if (existing.length) {
-      await db.quotes.where('log_id').equals(logId).delete();
+    await db.quotes.where('log_id').equals(logId).delete();
+    let seq = 0;
+    for (const q of (quotes || [])) {
+      if (q?.trim()) await db.quotes.add({ id: crypto.randomUUID(), log_id: logId, text: q.trim(), seq: seq++, page: null });
     }
   });
 }
@@ -264,4 +265,21 @@ export async function addReplayLog(titleId, currentTimes, logData) {
     tags:        [],
     created_at:  Date.now(),
   });
+}
+
+export async function fetchRecentPeople() {
+  return db.people.orderBy('used_at').reverse().limit(10).toArray();
+}
+
+export async function touchPerson(name) {
+  const existing = await db.people.where('name').equals(name).first();
+  if (existing) {
+    await db.people.update(existing.id, { used_at: Date.now() });
+  } else {
+    await db.people.add({ id: crypto.randomUUID(), name, used_at: Date.now() });
+  }
+}
+
+export async function deletePerson(name) {
+  await db.people.where('name').equals(name).delete();
 }
