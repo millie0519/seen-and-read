@@ -27,7 +27,7 @@ function fmtIso(iso) {
 // DB 행(log + title + quotes + siblings)을 UI RecordView 객체로 변환
 
 function buildView(log, title, quotes, siblings) {
-  const longForm = ['book', 'drama'].includes(title.category);
+  const longForm = ['book', 'drama', 'etc'].includes(title.category);
 
   const view = {
     id:       log.id,
@@ -173,7 +173,7 @@ export async function findExistingByRef(externalRef) {
 export async function saveNewRecord(base) {
   const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, times } = base;
   const colors   = CAT_COLORS[cat] || {};
-  const longForm = ['book', 'drama'].includes(cat);
+  const longForm = ['book', 'drama', 'etc'].includes(cat);
   const now      = Date.now();
   const titleId  = crypto.randomUUID();
   const logId    = crypto.randomUUID();
@@ -224,7 +224,7 @@ export async function updateRecord(logId, patch) {
 
   const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl } = patch;
   const colors   = cat ? CAT_COLORS[cat] : {};
-  const longForm = ['book', 'drama'].includes(cat);
+  const longForm = ['book', 'drama', 'etc'].includes(cat);
 
   await db.transaction('rw', db.titles, db.logs, db.quotes, async () => {
     const titlePatch = {

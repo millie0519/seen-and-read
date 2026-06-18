@@ -11,7 +11,7 @@ export async function searchByCategory(cat, query) {
 async function searchBooks(query) {
   try {
     const res = await fetch(
-      `/naver-api/v1/search/book.json?query=${encodeURIComponent(query)}&display=6`
+      `/api/naver-search?query=${encodeURIComponent(query)}&display=6`
     );
     if (!res.ok) return [];
     const data = await res.json();
