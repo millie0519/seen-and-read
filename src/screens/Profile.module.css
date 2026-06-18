@@ -194,6 +194,7 @@
   border: 2.5px solid var(--ink);
   border-radius: 14px;
   box-shadow: var(--shadow-sm);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -239,8 +240,8 @@
 
 .timelineHeader {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
@@ -249,7 +250,7 @@
 
 .timelineLine {
   position: absolute;
-  left: 6px;
+  left: 7.5px;
   top: 8px;
   bottom: 8px;
   width: 2.5px;
@@ -270,7 +271,10 @@
   border: 2.5px solid var(--ink);
 }
 
-.logCard { padding: 11px 14px; border-radius: 14px; }
+.logCard { padding: 11px 14px; border-radius: 14px; transition: background .12s; }
+.logCardActive { background: color-mix(in srgb, var(--status-times) 18%, #fff); border-color: var(--status-times); }
+
+.backToLatestBtn { cursor: pointer; background: var(--ink); color: #fff; border-color: var(--ink); margin-left: auto; }
 
 .logCardHeader {
   display: flex;

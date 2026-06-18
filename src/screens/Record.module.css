@@ -276,3 +276,127 @@
 }
 
 .addPersonLabel { font-size: 15px; }
+
+/* ── 커버 미리보기 ── */
+.coverPreview {
+  width: 150px;
+  aspect-ratio: 2 / 3;
+  border-radius: 12px;
+  border: 2.5px solid var(--ink);
+  overflow: hidden;
+  margin: 0 auto 10px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.coverPreviewDel {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.45);
+  border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff;
+}
+
+.coverActions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.coverActionBtn {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 30px; padding: 0 14px;
+  border: 2px solid var(--ink); border-radius: 999px;
+  background: #fff; font-family: var(--font-head); font-size: 12px;
+  cursor: pointer; box-shadow: var(--shadow-sm);
+}
+
+.coverPreviewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.coverPreviewEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 10px;
+  text-align: center;
+  opacity: 0.75;
+}
+
+.coverPreviewEmptyTitle {
+  font-size: 13px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── 제목 검색 드롭다운 ── */
+.titleWrap { position: relative; }
+
+.searchDrop {
+  position: absolute; left: 0; right: 0; top: calc(100% + 2px);
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  z-index: 20;
+  overflow: hidden;
+}
+
+.searchItem {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border: none; border-bottom: 1.5px solid rgba(43,33,24,0.08);
+  background: none; cursor: pointer; text-align: left; width: 100%;
+}
+.searchItem:last-child { border-bottom: none; }
+.searchItem:active { background: var(--paper-2); }
+
+.searchCover {
+  width: 36px; height: 50px; border-radius: 4px;
+  object-fit: cover; flex: none;
+}
+
+.searchCoverPlaceholder {
+  width: 36px; height: 50px; border-radius: 4px;
+  background: var(--paper); flex: none;
+  display: flex; align-items: center; justify-content: center;
+  border: 1.5px solid rgba(43,33,24,0.15);
+}
+
+.searchItemTitle { font-size: 14px; display: block; line-height: 1.3; }
+.searchItemSub { font-size: 12px; display: block; margin-top: 2px; }
+
+/* ── 회차 매칭 배너 ── */
+.matchBanner {
+  background: color-mix(in srgb, var(--yellow) 25%, #fff);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.matchBannerLabel { font-size: 13px; display: block; margin-bottom: 10px; }
+.matchBannerBtns { display: flex; gap: 8px; }
+
+.matchBannerBtn {
+  flex: 1; padding: 8px 0;
+  border: 2px solid var(--ink); border-radius: 999px;
+  font-family: var(--font-head); font-size: 13px;
+  cursor: pointer; background: #fff; color: var(--ink);
+}
+
+.matchBannerBtnActive { background: var(--ink); color: #fff; }

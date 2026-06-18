@@ -21,12 +21,16 @@ function FeedPost({ rec, onOpen }) {
       </div>
 
       <div className={styles.coverBox} style={{ background: rec.cover }}>
-        <div className={styles.coverContent} style={{ color: rec.coverFg }}>
-          <div className={styles.coverIcon}><Icon name={CATS[rec.cat]?.icon} size={40} /></div>
-          <div className={`t-display ${styles.coverTitle}`} style={{
-            textShadow: rec.coverFg === '#fff' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
-          }}>{rec.title}</div>
-        </div>
+        {rec.coverUrl ? (
+          <img src={rec.coverUrl} alt={rec.title} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }} />
+        ) : (
+          <div className={styles.coverContent} style={{ color: rec.coverFg }}>
+            <div className={styles.coverIcon}><Icon name={CATS[rec.cat]?.icon} size={40} /></div>
+            <div className={`t-display ${styles.coverTitle}`} style={{
+              textShadow: rec.coverFg === '#fff' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+            }}>{rec.title}</div>
+          </div>
+        )}
         <div className={styles.ratingBadge}>
           <Stars value={rec.rating} size={13} />
         </div>

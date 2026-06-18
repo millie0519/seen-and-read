@@ -17,6 +17,12 @@ function whenString(ts) {
   return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function fmtIso(iso) {
+  if (!iso) return null;
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
 // ── 뷰 빌더 ──────────────────────────────────────────────────
 // DB 행(log + title + quotes + siblings)을 UI RecordView 객체로 변환
 
@@ -31,8 +37,10 @@ function buildView(log, title, quotes, siblings) {
     creator:  title.creator,
     cover:    title.cover_color,
     coverFg:  title.cover_fg,
+    coverUrl: title.meta?.coverUrl || null,
     status:   log.status,
     rating:   log.rating,
+    n:        log.n,
     times:    siblings.length,
     place:    log.place   || null,
     note:     log.one_liner || null,
@@ -40,14 +48,17 @@ function buildView(log, title, quotes, siblings) {
     tags:     log.tags    || [],
     quote:    quotes.sort((a,b) => (a.seq??0)-(b.seq??0))[0]?.text || null,
     quotes:   quotes.sort((a,b) => (a.seq??0)-(b.seq??0)).map(q => q.text),
-    when:     whenString(log.created_at),
-    date:     relativeDate(log.created_at),
+    when:      fmtIso(log.date_single) || fmtIso(log.date_start) || log.date_start || whenString(log.created_at),
+    date:      relativeDate(log.created_at),
+    rawSingle: log.date_single || null,
+    rawStart:  log.date_start  || null,
+    rawEnd:    log.date_end    || null,
   };
 
   if (longForm && (log.date_start || log.date_end)) {
     view.span = {
-      start: log.date_start || null,
-      end:   log.date_end   || null,
+      start: fmtIso(log.date_start) || log.date_start || null,
+      end:   fmtIso(log.date_end)   || log.date_end   || null,
       days:  null,
       current: log.progress || null,
     };
@@ -58,8 +69,13 @@ function buildView(log, title, quotes, siblings) {
     view.logs = [...siblings]
       .sort((a, b) => b.n - a.n)
       .map(l => ({
+        id:     l.id,
         n:      l.n,
-        date:   l.date_single || l.date_start || relativeDate(l.created_at),
+        date:   l.date_single
+          ? fmtIso(l.date_single)
+          : l.date_start
+            ? (l.date_end ? `${l.date_start} ~ ${l.date_end}` : `${l.date_start} ~ 진행 중`)
+            : whenString(l.created_at),
         place:  l.place,
         rating: l.rating,
         note:   l.one_liner,
@@ -146,8 +162,16 @@ const CAT_COLORS = {
 // ── 쓰기 ─────────────────────────────────────────────────────
 
 // RecordScreen handleSave의 base 객체를 받아 DB에 저장
+export async function findExistingByRef(externalRef) {
+  if (!externalRef) return null;
+  const title = await db.titles.where('external_ref').equals(externalRef).first();
+  if (!title) return null;
+  const logs = await db.logs.where('title_id').equals(title.id).toArray();
+  return { ...title, logCount: logs.length };
+}
+
 export async function saveNewRecord(base) {
-  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle } = base;
+  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, times } = base;
   const colors   = CAT_COLORS[cat] || {};
   const longForm = ['book', 'drama'].includes(cat);
   const now      = Date.now();
@@ -162,16 +186,16 @@ export async function saveNewRecord(base) {
       creator:     creator?.trim() || null,
       cover_color: colors.cover_color,
       cover_fg:    colors.cover_fg,
-      external_ref: null,
-      meta:         null,
+      external_ref: externalRef || null,
+      meta:         coverUrl ? { coverUrl } : null,
       created_at:   now,
     });
 
     await db.logs.add({
       id:          logId,
       title_id:    titleId,
-      n:           1,
-      status:      status || 'done',
+      n:           times ?? 1,
+      status:      status || null,
       rating:      rating ?? 0,
       date_single: !longForm ? (dateSingle || null) : null,
       date_start:  longForm ? (span?.start || null) : null,
@@ -198,7 +222,7 @@ export async function updateRecord(logId, patch) {
   const log = await db.logs.get(logId);
   if (!log) return;
 
-  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle } = patch;
+  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl } = patch;
   const colors   = cat ? CAT_COLORS[cat] : {};
   const longForm = ['book', 'drama'].includes(cat);
 
@@ -209,6 +233,8 @@ export async function updateRecord(logId, patch) {
       ...(creator !== undefined && { creator: creator?.trim() || null }),
       ...(colors.cover_color && { cover_color: colors.cover_color }),
       ...(colors.cover_fg    && { cover_fg:    colors.cover_fg    }),
+      ...(externalRef !== undefined && { external_ref: externalRef || null }),
+      ...(coverUrl    !== undefined && { meta: coverUrl ? { coverUrl } : null }),
     };
     if (Object.keys(titlePatch).length) await db.titles.update(log.title_id, titlePatch);
 
@@ -281,6 +307,11 @@ export async function touchPerson(name) {
     await db.people.update(existing.id, { used_at: Date.now() });
   } else {
     await db.people.add({ id: crypto.randomUUID(), name, used_at: Date.now() });
+    const count = await db.people.count();
+    if (count > 50) {
+      const oldest = await db.people.orderBy('used_at').limit(count - 50).toArray();
+      await db.people.bulkDelete(oldest.map(p => p.id));
+    }
   }
 }
 

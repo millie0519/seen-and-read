@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  MdShelves, MdAdd, MdSearch, MdArrowBack, MdClose,
+  MdShelves, MdAdd, MdRemove, MdSearch, MdArrowBack, MdClose,
   MdNotifications, MdFavorite, MdBookmark, MdMenuBook,
   MdPlayCircle, MdTheaterComedy, MdConfirmationNumber,
   MdCameraAlt, MdCalendarMonth, MdLocationOn, MdChevronRight,
@@ -20,6 +20,7 @@ const ICON_MAP = {
   home: PiHouseLineFill,
   grid: MdShelves,
   plus: MdAdd,
+  minus: MdRemove,
   user: PiUserFill,
   search: MdSearch,
   back: MdArrowBack,
@@ -99,18 +100,28 @@ function Poster({ rec, w, h, tilt = 0, radius = 8, showTitle = true }) {
       className={styles.poster}
       style={{
         width: w, height: h, background: cover, color: fg,
-        borderRadius: radius,
+        borderRadius: radius, overflow: 'hidden',
         transform: tilt ? `rotate(${tilt}deg)` : undefined,
       }}
     >
-      <div className={styles.posterIconRow}>
-        <Icon name={CATS[rec.cat].icon} size={Math.min(18, nw*0.18)} />
-      </div>
-      {showTitle && (
-        <div className={styles.posterTitle} style={{
-          fontSize: Math.max(11, Math.min(20, nw * 0.16)),
-          textShadow: fg === '#fff' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none',
-        }}>{rec.title}</div>
+      {rec.coverUrl ? (
+        <img
+          src={rec.coverUrl}
+          alt={rec.title}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+      ) : (
+        <>
+          <div className={styles.posterIconRow}>
+            <Icon name={CATS[rec.cat].icon} size={Math.min(18, nw*0.18)} />
+          </div>
+          {showTitle && (
+            <div className={styles.posterTitle} style={{
+              fontSize: Math.max(11, Math.min(20, nw * 0.16)),
+              textShadow: fg === '#fff' ? '0 1px 2px rgba(0,0,0,0.25)' : 'none',
+            }}>{rec.title}</div>
+          )}
+        </>
       )}
     </div>
   );
@@ -136,7 +147,7 @@ function SectionHead({ title, action, onAction }) {
   );
 }
 
-function statusPills(rec) {
+function statusPills(rec, showNthViewing) {
   const out = [];
   if (rec.status === 'watching') {
     const lbl = (rec.span && rec.span.current) ? `${rec.span.current}화 보는 중` : '보는 중';
@@ -148,14 +159,18 @@ function statusPills(rec) {
   } else if (rec.status === 'done' && rec.cat === 'drama') {
     out.push({ label: '완주', tone: 'var(--status-done)', fg: 'var(--ink)', icon: 'collectionsBookmark' });
   }
-  if (rec.times && rec.times > 1) {
+  if (showNthViewing !== undefined) {
+    out.push({ label: `${showNthViewing}차`, tone: 'var(--status-times)', fg: 'var(--ink)' });
+  } else if (rec.n > 1) {
+    out.push({ label: `${rec.n}차`, tone: 'var(--status-times)', fg: 'var(--ink)' });
+  } else if (rec.times && rec.times > 1) {
     out.push({ label: `${rec.times}차`, tone: 'var(--status-times)', fg: 'var(--ink)' });
   }
   return out;
 }
 
-function StatusPills({ rec, size = 12 }) {
-  const pills = statusPills(rec);
+function StatusPills({ rec, size = 12, showNthViewing }) {
+  const pills = statusPills(rec, showNthViewing);
   if (!pills.length) return null;
   return (
     <span className={styles.statusPillRow}>

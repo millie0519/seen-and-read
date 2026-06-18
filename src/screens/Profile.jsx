@@ -162,23 +162,20 @@ function LogSheet({ rec, onClose, onSave }) {
   );
 }
 
-function DetailPage({ logId, onClose, onDelete, onEdit }) {
+function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
   const [confirmDelete, setConfirmDelete] = React.useState(false);
-  const [addingLog, setAddingLog]         = React.useState(false);
+  const [viewingId, setViewingId]         = React.useState(logId);
 
   const rec = useLiveQuery(
-    () => logId ? fetchRecordView(logId) : undefined,
-    [logId],
+    () => viewingId ? fetchRecordView(viewingId) : undefined,
+    [viewingId],
   );
+
+  const isLatest = viewingId === logId;
 
   if (!rec) return (
     <div style={{ position: 'absolute', inset: 0, background: 'var(--paper)', zIndex: 50 }} />
   );
-
-  const handleAddLog = async (logData) => {
-    await addReplayLog(rec.titleId, rec.times, logData);
-    setAddingLog(false);
-  };
 
   const handleDelete = async () => {
     await deleteRecord(logId);
@@ -191,7 +188,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
         <button onClick={onClose} className="icon-btn" style={{ border: '2.5px solid var(--ink)' }}><Icon name="back" size={22} /></button>
         <CatChip cat={rec.cat} solid />
         <div className={styles.detailTopBarRight}>
-          <StatusPills rec={rec} />
+          <StatusPills rec={rec} showNthViewing={rec.n > 1 ? rec.n : undefined} />
           <button onClick={() => setConfirmDelete(true)} className={styles.deleteBtn}>
             <Icon name="trash" size={17} />
           </button>
@@ -200,11 +197,17 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
 
       <div className="screen" style={{ paddingBottom: 40 }}>
         <div className={styles.heroSection}>
-          <div className={styles.heroCover} style={{ background: rec.cover, color: rec.coverFg }}>
-            <div className={styles.heroCoverIcon}><Icon name={CATS[rec.cat]?.icon} size={20} /></div>
-            <div className={`t-display ${styles.heroCoverTitle}`} style={{
-              textShadow: rec.coverFg === '#fff' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
-            }}>{rec.title}</div>
+          <div className={styles.heroCover} style={{ background: rec.cover, color: rec.coverFg, padding: rec.coverUrl ? 0 : undefined }}>
+            {rec.coverUrl ? (
+              <img src={rec.coverUrl} alt={rec.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            ) : (
+              <>
+                <div className={styles.heroCoverIcon}><Icon name={CATS[rec.cat]?.icon} size={20} /></div>
+                <div className={`t-display ${styles.heroCoverTitle}`} style={{
+                  textShadow: rec.coverFg === '#fff' ? '0 1px 3px rgba(0,0,0,0.3)' : 'none',
+                }}>{rec.title}</div>
+              </>
+            )}
           </div>
 
           <div className={styles.heroMeta}>
@@ -216,8 +219,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
                 <div className={styles.metaRow}>
                   <span className={styles.metaIcon}><Icon name="calendar" size={16} /></span>
                   <span className={styles.metaText}>
-                    {rec.span.start} ~ {rec.span.end || '진행 중'}<br />
-                    <span className={`muted ${styles.metaTextSm}`}>{rec.span.end ? `${rec.span.days || ''}일에 걸쳐` : `진행 중`}</span>
+                    {rec.span.start} ~ {rec.span.end || '진행 중'}
                   </span>
                 </div>
               ) : (
@@ -258,25 +260,32 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
               </div>
               <div className={styles.timelineTrack}>
                 <div className={styles.timelineLine} />
-                {rec.logs.map((lg, i) => (
-                  <div key={i} className={i === rec.logs.length - 1 ? styles.timelineItemLast : styles.timelineItem}>
-                    <div className={styles.timelineDot} style={{ background: i === 0 ? 'var(--status-times)' : '#fff' }} />
-                    <div className={`card-flat ${styles.logCard}`}>
-                      <div className={styles.logCardHeader}>
-                        <span className={`t-head ${styles.logCardN}`}>{lg.n}차</span>
-                        <span className={`muted ${styles.logCardDate}`}>{lg.date}</span>
-                        <span className={styles.logCardStars}><Stars value={lg.rating} size={12} /></span>
-                      </div>
-                      {lg.place && (
-                        <div className={styles.logPlace}>
-                          <span className={styles.logPlaceIcon}><Icon name="pin" size={13} /></span>
-                          <span className={`muted ${styles.logPlaceText}`}>{lg.place}</span>
+                {rec.logs.map((lg, i) => {
+                  const isActive = lg.id === viewingId;
+                  return (
+                    <div key={i} className={i === rec.logs.length - 1 ? styles.timelineItemLast : styles.timelineItem}>
+                      <div className={styles.timelineDot} style={{ background: i === 0 ? 'var(--status-times)' : '#fff' }} />
+                      <div
+                        className={`card-flat ${styles.logCard} ${isActive ? styles.logCardActive : ''}`}
+                        onClick={() => !isActive && setViewingId(lg.id)}
+                        style={{ cursor: isActive ? 'default' : 'pointer' }}
+                      >
+                        <div className={styles.logCardHeader}>
+                          <span className={`t-head ${styles.logCardN}`}>{lg.n}차</span>
+                          <span className={`muted ${styles.logCardDate}`}>{lg.date}</span>
+                          <span className={styles.logCardStars}><Stars value={lg.rating} size={12} /></span>
                         </div>
-                      )}
-                      {lg.note && <div className={styles.logNote}>{lg.note}</div>}
+                        {lg.place && (
+                          <div className={styles.logPlace}>
+                            <span className={styles.logPlaceIcon}><Icon name="pin" size={13} /></span>
+                            <span className={`muted ${styles.logPlaceText}`}>{lg.place}</span>
+                          </div>
+                        )}
+                        {lg.note && <div className={styles.logNote}>{lg.note}</div>}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -286,7 +295,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
               <button className="btn" style={{ flex: 1 }} onClick={() => onEdit(rec)}>
                 <Icon name="edit" size={17} style={{ verticalAlign: '-3px', marginRight: 4 }} />수정
               </button>
-              <button className="btn btn-sky" style={{ flex: 1 }} onClick={() => setAddingLog(true)}>
+              <button className="btn btn-sky" style={{ flex: 1 }} onClick={() => onReplay(rec)}>
                 <Icon name="plus" size={17} style={{ verticalAlign: '-3px', marginRight: 4 }} />{rec.logs ? '새 회차 추가' : '다시 보기'}
               </button>
             </div>
@@ -300,9 +309,6 @@ function DetailPage({ logId, onClose, onDelete, onEdit }) {
         </div>
       </div>
 
-      {addingLog && (
-        <LogSheet rec={rec} onClose={() => setAddingLog(false)} onSave={handleAddLog} />
-      )}
     </div>
   );
 }

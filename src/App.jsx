@@ -18,6 +18,7 @@ export default function App() {
   const [tab, setTab]               = React.useState('home');
   const [detailLogId, setDetailLogId] = React.useState(null);  // 상세 열린 log ID
   const [editingRec, setEditingRec]   = React.useState(null);  // 수정 중인 RecordView
+  const [replayRec, setReplayRec]     = React.useState(null);  // 회차 추가용 RecordView
   const [adding, setAdding]           = React.useState(false);
   const [searching, setSearching]     = React.useState(false);
 
@@ -59,6 +60,7 @@ export default function App() {
           onClose={() => setDetailLogId(null)}
           onDelete={() => setDetailLogId(null)}
           onEdit={(rec) => setEditingRec(rec)}
+          onReplay={(rec) => { setDetailLogId(null); setReplayRec(rec); }}
         />
       )}
 
@@ -84,6 +86,15 @@ export default function App() {
           rec={editingRec}
           onClose={() => setEditingRec(null)}
           onSaved={() => setEditingRec(null)}
+        />
+      )}
+
+      {/* 회차 추가 */}
+      {replayRec && (
+        <RecordScreen
+          replayFor={replayRec}
+          onClose={() => setReplayRec(null)}
+          onSaved={() => setReplayRec(null)}
         />
       )}
     </div>

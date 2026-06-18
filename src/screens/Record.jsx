@@ -2,7 +2,8 @@ import React from 'react';
 import { CATS } from '../data.js';
 import { Icon, Stars } from '../components/ui.jsx';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { saveNewRecord, updateRecord, fetchRecentPeople, searchPeople, touchPerson, deletePerson } from '../db/records.js';
+import { saveNewRecord, updateRecord, fetchRecentPeople, searchPeople, touchPerson, deletePerson, addReplayLog, findExistingByRef } from '../db/records.js';
+import { searchByCategory } from '../api/search.js';
 import styles from './Record.module.css';
 
 const CAT_COLORS = {
@@ -19,33 +20,92 @@ const CAT_COLORS = {
 
 const isISODate = (s) => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
 
-function RecordScreen({ rec: initialRec, onClose, onSaved }) {
-  const isEdit = !!initialRec;
+function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
+  const isEdit   = !!initialRec;
+  const isReplay = !!replayFor;
+  const base     = initialRec ?? replayFor ?? {};
 
-  const [cat, setCat]                   = React.useState(initialRec?.cat ?? 'book');
-  const [title, setTitle]               = React.useState(initialRec?.title ?? '');
-  const [creator, setCreator]           = React.useState(initialRec?.creator ?? '');
+  const [cat, setCat]                   = React.useState(base.cat ?? 'book');
+  const [title, setTitle]               = React.useState(base.title ?? '');
+  const [creator, setCreator]           = React.useState(base.creator ?? '');
   const [rating, setRating]             = React.useState(initialRec?.rating ?? 4);
-  const [status, setStatus]             = React.useState(initialRec?.status ?? 'done');
-  const [times, setTimes]               = React.useState(initialRec?.times ?? 1);
+  const [status, setStatus]             = React.useState(initialRec?.status ?? null);
+  const [times, setTimes]               = React.useState(isReplay ? (replayFor.n + 1) : (initialRec?.times ?? 1));
   const [note, setNote]                 = React.useState(initialRec?.note ?? '');
   const [quotes, setQuotes]             = React.useState(initialRec?.quotes?.length ? initialRec.quotes : ['']);
-  const [startDate, setStartDate]       = React.useState(isISODate(initialRec?.span?.start) ? initialRec.span.start : '');
-  const [endDate, setEndDate]           = React.useState(isISODate(initialRec?.span?.end) ? initialRec.span.end : '');
-  const [stillWatching, setStillWatch]  = React.useState(initialRec?.span ? !initialRec.span.end : false);
+  const [startDate, setStartDate]       = React.useState(initialRec?.rawStart ?? '');
+  const [endDate, setEndDate]           = React.useState(
+    ['book','drama','etc'].includes(base.cat) ? (initialRec?.rawEnd ?? '') : (initialRec?.rawSingle ?? '')
+  );
+  const [stillWatching, setStillWatch]  = React.useState(initialRec?.span ? !initialRec.rawEnd : false);
   const [place, setPlace]               = React.useState(initialRec?.place ?? null);
   const [people, setPeople]             = React.useState(
     initialRec?.with ? initialRec.with.split(', ').filter(Boolean) : []
   );
   const [sheet, setSheet]               = React.useState(null);
   const [saving, setSaving]             = React.useState(false);
+  const [coverUrl, setCoverUrl]         = React.useState(base.coverUrl ?? null);
+  const [externalRef, setExRef]         = React.useState(null);
+  const [searchResults, setResults]     = React.useState([]);
+  const [searchOpen, setSearchOpen]     = React.useState(false);
+  const [existingTitle, setExisting]    = React.useState(
+    replayFor ? { id: replayFor.titleId, logCount: replayFor.n } : null
+  );
+  const [saveAsReplay, setSaveAsReplay] = React.useState(isReplay);
 
-  const startDateRef = React.useRef(null);
-  const endDateRef   = React.useRef(null);
+  const startDateRef  = React.useRef(null);
+  const endDateRef    = React.useRef(null);
   const singleDateRef = React.useRef(null);
+  const searchTimer   = React.useRef(null);
+  const skipSearch    = React.useRef(false);
+  const titleWrapRef  = React.useRef(null);
+  const coverImgRef   = React.useRef(null);
+
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (titleWrapRef.current && !titleWrapRef.current.contains(e.target)) {
+        setSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
   const openPicker = (ref) => { try { ref.current?.showPicker(); } catch { ref.current?.click(); } };
 
   const togglePerson = (name) => setPeople(ps => ps.includes(name) ? ps.filter(p => p !== name) : [...ps, name]);
+
+  React.useEffect(() => {
+    if (isReplay) return;
+    if (skipSearch.current) { skipSearch.current = false; return; }
+    const searchable = ['book', 'movie', 'drama'].includes(cat);
+    if (!searchable || title.trim().length < 2) {
+      setResults([]); setSearchOpen(false); return;
+    }
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(async () => {
+      const results = await searchByCategory(cat, title);
+      setResults(results);
+      setSearchOpen(results.length > 0);
+    }, 450);
+    return () => clearTimeout(searchTimer.current);
+  }, [title, cat]);
+
+  const handleSelectResult = async (result) => {
+    skipSearch.current = true;
+    setTitle(result.title);
+    setCreator(result.creator || '');
+    setCoverUrl(result.coverUrl || null);
+    setExRef(result.externalRef || null);
+    setSearchOpen(false);
+    setResults([]);
+    if (result.externalRef) {
+      const existing = await findExistingByRef(result.externalRef);
+      setExisting(existing);
+      setSaveAsReplay(false);
+    } else {
+      setExisting(null);
+    }
+  };
 
   const longForm   = cat === 'book' || cat === 'drama' || cat === 'etc';
   const doneLabel  = cat === 'book' ? '완독' : cat === 'drama' ? '완주' : '봤어요';
@@ -67,32 +127,42 @@ const fmtDate = (iso) => {
     if (!title.trim() || saving) return;
     setSaving(true);
     try {
-      const now = new Date();
-      const base = {
-        cat,
-        title:   title.trim(),
-        creator: creator.trim() || null,
-        status, times, rating,
-        note:    note.trim() || null,
-        quotes:  quotes.filter(q => q.trim()),
-        tags:    [],
-        with:    people.length ? people.join(', ') : null,
-        place:   place || null,
-        ...(longForm ? {
-          span: {
-            start: fmtDate(startDate) || now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }),
-            end:   stillWatching ? null : (fmtDate(endDate) || now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })),
-            days:  null,
-          },
-        } : {
-          dateSingle: endDate || null,
-        }),
-      };
-
-      if (isEdit) {
-        await updateRecord(initialRec.id, base);
+      if (saveAsReplay && existingTitle && !isEdit) {
+        await addReplayLog(existingTitle.id, existingTitle.logCount, {
+          rating,
+          date:  endDate || null,
+          note:  note.trim() || null,
+          place: place || null,
+        });
       } else {
-        await saveNewRecord(base);
+        const now = new Date();
+        const base = {
+          cat,
+          title:       title.trim(),
+          creator:     creator.trim() || null,
+          status, times, rating,
+          note:        note.trim() || null,
+          quotes:      quotes.filter(q => q.trim()),
+          tags:        [],
+          with:        people.length ? people.join(', ') : null,
+          place:       place || null,
+          externalRef: externalRef || null,
+          coverUrl:    coverUrl || null,
+          ...(longForm ? {
+            span: {
+              start: startDate || now.toISOString().slice(0, 10),
+              end:   stillWatching ? null : (endDate || now.toISOString().slice(0, 10)),
+              days:  null,
+            },
+          } : {
+            dateSingle: endDate || now.toISOString().slice(0, 10),
+          }),
+        };
+        if (isEdit) {
+          await updateRecord(initialRec.id, base);
+        } else {
+          await saveNewRecord(base);
+        }
       }
       onSaved();
     } finally {
@@ -106,7 +176,7 @@ const fmtDate = (iso) => {
         <button onClick={onClose} className="icon-btn" style={{ border: '2.5px solid var(--ink)' }}>
           <Icon name="close" size={22} />
         </button>
-        <span className={`t-display ${styles.headerTitle}`}>{isEdit ? '기록 수정' : '새 기록'}</span>
+        <span className={`t-display ${styles.headerTitle}`}>{isEdit ? '기록 수정' : isReplay ? 'N번째 기록' : '새 기록'}</span>
         <button className="btn btn-coral" style={{ padding: '9px 18px', fontSize: 14, opacity: saving ? 0.6 : 1 }} onClick={handleSave}>
           {saving ? '저장 중…' : '저장'}
         </button>
@@ -115,7 +185,7 @@ const fmtDate = (iso) => {
       <div className="screen" style={{ padding: '4px 18px 0' }}>
         <label className={`t-head ${styles.lbl}`}>무엇을 봤어요?</label>
         <div className={styles.catRow}>
-          {Object.keys(CATS).map(k => (
+          {(isReplay ? [cat] : Object.keys(CATS)).map(k => (
             <button key={k} onClick={() => setCat(k)} className={styles.catBtn}>
               <span className="pill pill-xl" style={{
                 background: cat === k ? CATS[k].color : undefined,
@@ -128,18 +198,99 @@ const fmtDate = (iso) => {
           ))}
         </div>
 
-        <label className={`t-head ${styles.lbl}`}>제목</label>
-        <div className={`card-flat ${styles.inputBox}`}>
-          <Icon name="search" size={20} />
-          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="제목을 입력하세요"
-            className="field-input" />
+        <div
+          className={styles.coverPreview}
+          style={{ background: CAT_COLORS[cat]?.cover || '#E9DCC0', color: CAT_COLORS[cat]?.coverFg || 'var(--ink)' }}
+        >
+          {coverUrl ? (
+            <>
+              <img src={coverUrl} alt={title} className={styles.coverPreviewImg} />
+              <button className={styles.coverPreviewDel} onClick={() => setCoverUrl(null)}>
+                <Icon name="close" size={14} />
+              </button>
+            </>
+          ) : (
+            <div className={styles.coverPreviewEmpty}>
+              <Icon name={CATS[cat]?.icon} size={42} />
+              {title && <span className={`t-display ${styles.coverPreviewEmptyTitle}`}>{title}</span>}
+            </div>
+          )}
+        </div>
+        <div className={styles.coverActions}>
+          <button className={styles.coverActionBtn} onClick={() => coverImgRef.current?.click()}>
+            <Icon name="camera" size={14} />직접 등록
+          </button>
+          <input
+            ref={coverImgRef}
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={e => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const reader = new FileReader();
+              reader.onload = ev => {
+                const img = new Image();
+                img.onload = () => {
+                  const MAX = 500;
+                  const scale = img.width > MAX ? MAX / img.width : 1;
+                  const canvas = document.createElement('canvas');
+                  canvas.width  = Math.round(img.width  * scale);
+                  canvas.height = Math.round(img.height * scale);
+                  canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                  setCoverUrl(canvas.toDataURL('image/jpeg', 0.85));
+                };
+                img.src = ev.target.result;
+              };
+              reader.readAsDataURL(file);
+              e.target.value = '';
+            }}
+          />
         </div>
 
-        <div className={`card-flat ${styles.inputBoxGap}`}>
-          <Icon name="user" size={20} />
-          <input value={creator} onChange={e => setCreator(e.target.value)} placeholder="감독 · 작가 · 아티스트 (선택)"
-            className="field-input" />
+        <label className={`t-head ${styles.lbl}`}>제목</label>
+        <div className={styles.titleWrap} ref={titleWrapRef}>
+          <div className={`card-flat ${styles.inputBox}`} style={{ opacity: isReplay ? 0.7 : 1 }}>
+            <Icon name="search" size={20} />
+            <input value={title} onChange={e => !isReplay && setTitle(e.target.value)} placeholder="제목을 입력하세요"
+              className="field-input" readOnly={isReplay} />
+            {title && !isReplay && <button onClick={() => { setTitle(''); setResults([]); setSearchOpen(false); setExisting(null); }} className="btn-reset"><Icon name="close" size={18} /></button>}
+          </div>
+          {searchOpen && searchResults.length > 0 && (
+            <div className={styles.searchDrop}>
+              {searchResults.map((r, i) => (
+                <button key={i} onClick={() => handleSelectResult(r)} className={styles.searchItem}>
+                  {r.coverUrl
+                    ? <img src={r.coverUrl} alt="" className={styles.searchCover} />
+                    : <div className={styles.searchCoverPlaceholder}><Icon name={CATS[cat].icon} size={16} /></div>
+                  }
+                  <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                    <strong className={styles.searchItemTitle}>{r.title}</strong>
+                    {(r.creator || r.sub) && (
+                      <span className={`muted ${styles.searchItemSub}`}>{[r.creator, r.sub].filter(Boolean).join(' · ')}</span>
+                    )}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
+
+        <div className={`card-flat ${styles.inputBoxGap}`} style={{ opacity: isReplay ? 0.7 : 1 }}>
+          <Icon name="user" size={20} />
+          <input value={creator} onChange={e => !isReplay && setCreator(e.target.value)} placeholder="감독 · 작가 · 아티스트 (선택)"
+            className="field-input" readOnly={isReplay} />
+        </div>
+
+        {existingTitle && !isEdit && !isReplay && (
+          <div className={styles.matchBanner}>
+            <span className={`t-head ${styles.matchBannerLabel}`}>이미 {existingTitle.logCount}번 기록한 작품이에요</span>
+            <div className={styles.matchBannerBtns}>
+              <button onClick={() => setSaveAsReplay(false)} className={`${styles.matchBannerBtn} ${!saveAsReplay ? styles.matchBannerBtnActive : ''}`}>새 기록</button>
+              <button onClick={() => setSaveAsReplay(true)}  className={`${styles.matchBannerBtn} ${saveAsReplay  ? styles.matchBannerBtnActive : ''}`}>{existingTitle.logCount + 1}번째 회차 추가</button>
+            </div>
+          </div>
+        )}
 
         {longForm ? (
           <>
@@ -200,7 +351,7 @@ const fmtDate = (iso) => {
             <span className={`muted ${styles.stepperSub}`}>{times === 1 ? '처음 봤어요' : `${times}번째로 봤어요`}</span>
           </div>
           <div className={styles.stepperControls}>
-            <button onClick={() => setTimes(t => Math.max(1, t - 1))} className={styles.stepperBtn}><Icon name="close" size={16} /></button>
+            <button onClick={() => setTimes(t => Math.max(1, t - 1))} className={styles.stepperBtn}><Icon name="minus" size={16} /></button>
             <span className={`t-display ${styles.stepperCount}`}>{times}차</span>
             <button onClick={() => setTimes(t => t + 1)} className={styles.stepperBtn}><Icon name="plus" size={16} /></button>
           </div>
