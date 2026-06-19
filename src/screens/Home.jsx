@@ -46,7 +46,7 @@ function FeedPost({ rec, onOpen }) {
           </div>
         </div>
         <div className={styles.captionText}>
-          {rec.creator && <span className={`muted ${styles.captionCreator}`}>· {rec.creator}</span>}
+          {rec.creator && <span className={`muted ${styles.captionCreator}`}>{rec.creator}</span>}
           {rec.note && <p className={styles.captionNote}>{rec.note}</p>}
         </div>
         {rec.quote && (

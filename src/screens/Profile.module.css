@@ -207,7 +207,7 @@
 
 .heroMeta { flex: 1; min-width: 0; padding-top: 2px; }
 .heroTitle { font-size: 24px; margin: 0 0 4px; line-height: 1.1; }
-.heroCreator { font-size: 14px; margin-bottom: 10px; }
+.heroCreator { font-size: 14px; margin-bottom: 10px; word-break: keep-all; }
 .heroStars { margin-bottom: 12px; }
 .heroStatus { margin-bottom: 12px; }
 .metaRows { display: flex; flex-direction: column; gap: 7px; }
@@ -226,14 +226,14 @@
 .quoteCard {
   position: relative;
   margin: 0 0 16px;
-  padding: 14px 16px;
-  background-color: #fff;
+  padding: 14px 16px 14px 32px;
+  background-color: rgba(255,255,255,.6);
+  box-shadow: 3px 3px 0 var(--paper-2);
   border-radius: 16px;
-  border: 2px solid var(--ink-soft);
 }
 .quoteCardText { font-size: 14px; line-height: 1.5; font-style: italic; white-space: pre-wrap; }
-.quoteAccent { position: absolute; top: 0; left: 0; color: var(--coral); opacity: 0.6; }
-.noteText { font-size: 15px; line-height: 1.6; white-space: pre-line; margin: 0 0 18px; }
+.quoteAccent { position: absolute; top: 10px; left: 10px; color: var(--coral);}
+.noteText { font-size: 15px; line-height: 1.6; white-space: pre-line; margin: 0 0 32px; }
 
 /* Timeline */
 .timeline { margin-bottom: 22px; }
@@ -290,7 +290,7 @@
 .logPlace { display: flex; align-items: center; gap: 5px; margin-bottom: 4px; }
 .logPlaceIcon { color: var(--ink-soft); display: flex; }
 .logPlaceText { font-size: 12px; }
-.logNote { font-size: 13px; line-height: 1.45; }
+.logNote { font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
 .actionsRow { display: flex; gap: 10px; }
 .deleteConfirm { display: flex; align-items: center; gap: 10px; }

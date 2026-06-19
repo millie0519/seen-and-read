@@ -2,8 +2,8 @@ import React from 'react';
 import { CATS } from '../data.js';
 import { Icon, Stars } from '../components/ui.jsx';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { saveNewRecord, updateRecord, fetchRecentPeople, searchPeople, touchPerson, deletePerson, addReplayLog, findExistingByRef } from '../db/records.js';
-import { searchByCategory } from '../api/search.js';
+import { saveNewRecord, updateRecord, fetchRecentPeople, searchPeople, touchPerson, deletePerson, addReplayLog, findExistingByRef, fetchRecentPlaces } from '../db/records.js';
+import { searchByCategory, searchMoreByCategory, fetchCredits } from '../api/search.js';
 import styles from './Record.module.css';
 
 const CAT_COLORS = {
@@ -29,7 +29,8 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
   const [title, setTitle]               = React.useState(base.title ?? '');
   const [creator, setCreator]           = React.useState(base.creator ?? '');
   const [rating, setRating]             = React.useState(initialRec?.rating ?? 4);
-  const [status, setStatus]             = React.useState(initialRec?.status ?? null);
+  const isLongFormCat = ['book', 'drama', 'etc'].includes(base.cat ?? 'book');
+  const [status, setStatus]             = React.useState(initialRec?.status ?? (isLongFormCat ? null : 'done'));
   const [times, setTimes]               = React.useState(isReplay ? (replayFor.n + 1) : (initialRec?.times ?? 1));
   const [note, setNote]                 = React.useState(initialRec?.note ?? '');
   const [quotes, setQuotes]             = React.useState(initialRec?.quotes?.length ? initialRec.quotes : ['']);
@@ -58,6 +59,7 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
   const singleDateRef = React.useRef(null);
   const searchTimer   = React.useRef(null);
   const skipSearch    = React.useRef(false);
+  const initialTitle  = React.useRef(base.title ?? '');
   const titleWrapRef  = React.useRef(null);
   const coverImgRef   = React.useRef(null);
 
@@ -75,10 +77,17 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
   const togglePerson = (name) => setPeople(ps => ps.includes(name) ? ps.filter(p => p !== name) : [...ps, name]);
 
   React.useEffect(() => {
+    if (isEdit || isReplay) return;
+    const isLong = ['book', 'drama', 'etc'].includes(cat);
+    setStatus(isLong ? null : 'done');
+  }, [cat]);
+
+  React.useEffect(() => {
     if (isReplay) return;
     if (skipSearch.current) { skipSearch.current = false; return; }
+    if (isEdit && title === initialTitle.current) return;
     const searchable = ['book', 'movie', 'drama'].includes(cat);
-    if (!searchable || title.trim().length < 2) {
+    if (!searchable || title.trim().length < 1) {
       setResults([]); setSearchOpen(false); return;
     }
     clearTimeout(searchTimer.current);
@@ -93,11 +102,16 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
   const handleSelectResult = async (result) => {
     skipSearch.current = true;
     setTitle(result.title);
-    setCreator(result.creator || '');
     setCoverUrl(result.coverUrl || null);
     setExRef(result.externalRef || null);
     setSearchOpen(false);
     setResults([]);
+    if (result.externalRef?.startsWith('tmdb:')) {
+      const credits = await fetchCredits(result.externalRef);
+      setCreator(credits || result.creator || '');
+    } else {
+      setCreator(result.creator || '');
+    }
     if (result.externalRef) {
       const existing = await findExistingByRef(result.externalRef);
       setExisting(existing);
@@ -205,9 +219,11 @@ const fmtDate = (iso) => {
           {coverUrl ? (
             <>
               <img src={coverUrl} alt={title} className={styles.coverPreviewImg} />
-              <button className={styles.coverPreviewDel} onClick={() => setCoverUrl(null)}>
-                <Icon name="close" size={14} />
-              </button>
+              {!isReplay && (
+                <button className={styles.coverPreviewDel} onClick={() => setCoverUrl(null)}>
+                  <Icon name="close" size={14} />
+                </button>
+              )}
             </>
           ) : (
             <div className={styles.coverPreviewEmpty}>
@@ -217,9 +233,11 @@ const fmtDate = (iso) => {
           )}
         </div>
         <div className={styles.coverActions}>
-          <button className={styles.coverActionBtn} onClick={() => coverImgRef.current?.click()}>
-            <Icon name="camera" size={14} />직접 등록
-          </button>
+          {!isReplay && (
+            <button className={styles.coverActionBtn} onClick={() => coverImgRef.current?.click()}>
+              <Icon name="camera" size={14} />직접 등록
+            </button>
+          )}
           <input
             ref={coverImgRef}
             type="file"
@@ -253,7 +271,8 @@ const fmtDate = (iso) => {
           <div className={`card-flat ${styles.inputBox}`} style={{ opacity: isReplay ? 0.7 : 1 }}>
             <Icon name="search" size={20} />
             <input value={title} onChange={e => !isReplay && setTitle(e.target.value)} placeholder="제목을 입력하세요"
-              className="field-input" readOnly={isReplay} />
+              className="field-input" readOnly={isReplay} enterKeyHint="search"
+              onKeyDown={e => { if (e.key === 'Enter' && title.trim() && !isReplay) { setSearchOpen(false); setSheet('search'); } }} />
             {title && !isReplay && <button onClick={() => { setTitle(''); setResults([]); setSearchOpen(false); setExisting(null); }} className="btn-reset"><Icon name="close" size={18} /></button>}
           </div>
           {searchOpen && searchResults.length > 0 && (
@@ -272,6 +291,9 @@ const fmtDate = (iso) => {
                   </span>
                 </button>
               ))}
+              <button className={styles.searchMoreBtn} onClick={() => { setSearchOpen(false); setSheet('search'); }}>
+                더 검색하기
+              </button>
             </div>
           )}
         </div>
@@ -280,6 +302,7 @@ const fmtDate = (iso) => {
           <Icon name="user" size={20} />
           <input value={creator} onChange={e => !isReplay && setCreator(e.target.value)} placeholder="감독 · 작가 · 아티스트 (선택)"
             className="field-input" readOnly={isReplay} />
+          {creator && !isReplay && <button onClick={() => setCreator('')} className="btn-reset"><Icon name="close" size={18} /></button>}
         </div>
 
         {existingTitle && !isEdit && !isReplay && (
@@ -393,11 +416,15 @@ const fmtDate = (iso) => {
         <div className={styles.attachRow}>
           <span className="pill pill-xl" style={{ background: 'var(--yellow)', cursor: 'pointer' }}><Icon name="camera" size={17} />사진</span>
           <button onClick={() => setSheet('place')} className="filter-btn">
-            <span className="pill pill-xl" style={{ background: place ? 'var(--mint)' : undefined }}><Icon name="pin" size={17} />{place || '장소'}</span>
+            <span className="pill pill-xl" style={{ background: place ? 'var(--mint)' : undefined }}>
+              <Icon name="pin" size={17} />{place || '장소'}
+              {place && <span role="button" onClick={e => { e.stopPropagation(); setPlace(null); }} style={{ marginLeft: 4, display: 'inline-flex', alignItems: 'center' }}><Icon name="close" size={14} /></span>}
+            </span>
           </button>
           <button onClick={() => setSheet('people')} className="filter-btn">
             <span className="pill pill-xl" style={{ background: people.length ? 'var(--mint)' : undefined }}>
               <Icon name="face" size={17} />{people.length ? people.join(', ') : '함께 본 사람'}
+              {people.length > 0 && <span role="button" onClick={e => { e.stopPropagation(); setPeople([]); }} style={{ marginLeft: 4, display: 'inline-flex', alignItems: 'center' }}><Icon name="close" size={14} /></span>}
             </span>
           </button>
         </div>
@@ -406,30 +433,69 @@ const fmtDate = (iso) => {
 
       {sheet === 'place'  && <PlaceSheet  onClose={() => setSheet(null)} onPick={(p) => { setPlace(p); setSheet(null); }} />}
       {sheet === 'people' && <PeopleSheet selected={people} onToggle={togglePerson} onClose={() => setSheet(null)} />}
+      {sheet === 'search' && <SearchSheet cat={cat} initialQuery={title} onSelect={(r) => { handleSelectResult(r); setSheet(null); }} onClose={() => setSheet(null)} />}
     </div>
   );
 }
 
 function PlaceSheet({ onClose, onPick }) {
-  const [q, setQ] = React.useState('');
-  const inputRef  = React.useRef(null);
+  const [q, setQ]             = React.useState('');
+  const [results, setResults] = React.useState([]);
+  const [loading, setLoading]       = React.useState(false);
+  const [locating, setLocating]     = React.useState(false);
+  const [nearby, setNearby]         = React.useState(null);
+  const inputRef = React.useRef(null);
+  const timerRef = React.useRef(null);
   React.useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const recent = ['CGV 용산아이파크몰', '블루스퀘어 신한카드홀', '국립현대미술관 서울'];
-  const MAP = [
-    { name: 'CGV 용산아이파크몰', addr: '서울 용산구 한강대로23길 55' },
-    { name: '용산역', addr: '서울 용산구 한강대로23길 55' },
-    { name: '용산 CGV IMAX', addr: '서울 용산구 한강로동' },
-    { name: '국립중앙박물관', addr: '서울 용산구 서빙고로 137' },
-  ];
-  const results = q.trim() ? MAP.filter(m => (m.name + m.addr).includes(q.trim())) : [];
+  const recent = useLiveQuery(fetchRecentPlaces, []) ?? [];
+
+  React.useEffect(() => {
+    if (!q.trim()) { setResults([]); return; }
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const res  = await fetch(`/api/kakao-keyword?query=${encodeURIComponent(q.trim())}`);
+        const data = await res.json();
+        setResults((data.documents || []).map(d => ({
+          name: d.place_name,
+          addr: d.road_address_name || d.address_name || '',
+        })));
+      } catch {
+        setResults([]);
+      }
+      setLoading(false);
+    }, 400);
+    return () => clearTimeout(timerRef.current);
+  }, [q]);
+
+  const handleCurrentLoc = () => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { longitude: x, latitude: y } = pos.coords;
+          const res  = await fetch(`/api/kakao-category?x=${x}&y=${y}`);
+          const data = await res.json();
+          setNearby((data.documents || []).map(d => ({
+            name: d.place_name,
+            addr: d.road_address_name || d.address_name || '',
+          })));
+        } catch {
+          setNearby([]);
+        }
+        setLocating(false);
+      },
+      () => setLocating(false)
+    );
+  };
 
   return (
     <div className="sheet-back" onClick={onClose}>
       <div onClick={e => e.stopPropagation()} className="sheet-inner">
-        <div className="sheet-handle-row">
-          <div className="sheet-handle" />
-        </div>
+        <div className="sheet-handle-row"><div className="sheet-handle" /></div>
         <div className={styles.sheetHeader}>
           <div className={styles.sheetHeaderRow}>
             <span className={`t-display ${styles.sheetTitle}`}>장소</span>
@@ -437,46 +503,69 @@ function PlaceSheet({ onClose, onPick }) {
           </div>
           <div className={`card-flat ${styles.sheetSearchBox}`}>
             <Icon name="search" size={20} />
-            <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)} placeholder="장소 검색 (예: 용산)"
-              className="field-input" />
+            <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)} placeholder="장소명 또는 주소 검색"
+              className="field-input" enterKeyHint="search" onKeyDown={e => { if (e.key === 'Enter' && q.trim()) onPick(q.trim()); }} />
             {q && <button onClick={() => setQ('')} className="btn-reset"><Icon name="close" size={18} /></button>}
           </div>
         </div>
         <div className={`screen ${styles.sheetBody}`}>
           {q.trim() ? (
-            <div className={styles.rowBtnResults}>
-              {results.map((m, i) => (
+            <>
+              {loading && <div className={`muted ${styles.searchLoadingMsg}`}>검색 중...</div>}
+              {!loading && results.map((m, i) => (
                 <button key={i} onClick={() => onPick(m.name)} className={styles.rowBtn}>
                   <span style={{ color: 'var(--coral-d)', flex: 'none' }}><Icon name="pin" size={20} /></span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span className={`t-head ${styles.rowBtnName}`}>{m.name}</span>
-                    <span className={`muted ${styles.rowBtnAddr}`}>{m.addr}</span>
+                    {m.addr && <span className={`muted ${styles.rowBtnAddr}`}>{m.addr}</span>}
                   </span>
                 </button>
               ))}
-              {!results.length && (
-                <div className={`muted ${styles.noResultMsg}`}>
-                  '{q}' 검색 결과가 없어요.{' '}
-                  <button onClick={() => onPick(q)} className={`btn-reset ${styles.noResultLink}`} style={{ color: 'var(--coral-d)', fontFamily: 'var(--font-head)' }}>'{q}' 사용</button>
-                </div>
+              {!loading && !results.length && (
+                <div className={`muted ${styles.noResultMsg}`}>'{q}' 검색 결과가 없어요.</div>
               )}
-            </div>
+              {!loading && (
+                <button onClick={() => onPick(q.trim())} className={styles.rowBtn}>
+                  <span style={{ color: 'var(--ink-soft)', flex: 'none' }}><Icon name="edit" size={18} /></span>
+                  <span className={`t-head`} style={{ fontSize: 15 }}>'{q}' 직접 입력</span>
+                </button>
+              )}
+            </>
           ) : (
             <>
-              <button onClick={() => onPick('현재 위치')} className={`card-flat ${styles.currentLocBtn}`}>
+              <button onClick={handleCurrentLoc} className={`card-flat ${styles.currentLocBtn}`} disabled={locating}>
                 <span className={styles.currentLocIcon}><Icon name="pin" size={20} /></span>
                 <span>
-                  <span className={`t-head ${styles.currentLocText}`}>지금 위치에서 찾기</span>
-                  <span className={`muted ${styles.currentLocSub}`}>근처 장소를 추천해드려요</span>
+                  <span className={`t-head ${styles.currentLocText}`}>{locating ? '위치 확인 중...' : '지금 위치에서 찾기'}</span>
+                  <span className={`muted ${styles.currentLocSub}`}>근처 문화시설·명소를 찾아드려요</span>
                 </span>
               </button>
-              <h4 className={`t-head muted ${styles.recentLabel}`}>최근 장소</h4>
-              {recent.map((r, i) => (
-                <button key={i} onClick={() => onPick(r)} className={styles.rowBtn}>
-                  <span style={{ color: 'var(--ink-soft)', flex: 'none' }}><Icon name="pin" size={18} /></span>
-                  <span className="t-head" style={{ fontSize: 15, flex: 1, minWidth: 0 }}>{r}</span>
-                </button>
-              ))}
+              {nearby !== null && (
+                <>
+                  <h4 className={`t-head muted ${styles.recentLabel}`}>근처 장소</h4>
+                  {nearby.length === 0 && <div className={`muted ${styles.noResultMsg}`}>근처에 등록된 장소가 없어요.</div>}
+                  {nearby.map((m, i) => (
+                    <button key={i} onClick={() => onPick(m.name)} className={styles.rowBtn}>
+                      <span style={{ color: 'var(--coral-d)', flex: 'none' }}><Icon name="pin" size={20} /></span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span className={`t-head ${styles.rowBtnName}`}>{m.name}</span>
+                        {m.addr && <span className={`muted ${styles.rowBtnAddr}`}>{m.addr}</span>}
+                      </span>
+                    </button>
+                  ))}
+                </>
+              )}
+              {recent.length > 0 && (
+                <>
+                  <h4 className={`t-head muted ${styles.recentLabel}`}>최근 장소</h4>
+                  {recent.map((r, i) => (
+                    <button key={i} onClick={() => onPick(r)} className={styles.rowBtn}>
+                      <span style={{ color: 'var(--ink-soft)', flex: 'none' }}><Icon name="pin" size={18} /></span>
+                      <span className="t-head" style={{ fontSize: 15, flex: 1, minWidth: 0 }}>{r}</span>
+                    </button>
+                  ))}
+                </>
+              )}
             </>
           )}
         </div>
@@ -563,6 +652,100 @@ function PeopleSheet({ selected, onToggle, onClose }) {
               );
             })}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SearchSheet({ cat, initialQuery, onSelect, onClose }) {
+  const [q, setQ]             = React.useState(initialQuery);
+  const [results, setResults] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [hasMore, setHasMore] = React.useState(false);
+  const pageRef    = React.useRef(1);
+  const queryRef   = React.useRef(initialQuery);
+  const loaderRef  = React.useRef(null);
+  const inputRef   = React.useRef(null);
+  const timerRef   = React.useRef(null);
+  React.useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const runSearch = React.useCallback(async (searchQ) => {
+    if (!searchQ.trim()) { setResults([]); setHasMore(false); return; }
+    queryRef.current = searchQ.trim();
+    pageRef.current  = 1;
+    setLoading(true);
+    const { items, hasMore: more } = await searchMoreByCategory(cat, searchQ.trim(), 1);
+    setResults(items);
+    setHasMore(more);
+    setLoading(false);
+  }, [cat]);
+
+  React.useEffect(() => {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => runSearch(q), 400);
+    return () => clearTimeout(timerRef.current);
+  }, [q, runSearch]);
+
+  const loadMore = React.useCallback(async () => {
+    if (loading || !hasMore) return;
+    const nextPage = pageRef.current + 1;
+    setLoading(true);
+    const { items, hasMore: more } = await searchMoreByCategory(cat, queryRef.current, nextPage);
+    pageRef.current = nextPage;
+    setResults(prev => [...prev, ...items]);
+    setHasMore(more);
+    setLoading(false);
+  }, [cat, loading, hasMore]);
+
+  React.useEffect(() => {
+    const el = loaderRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) loadMore();
+    }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [loadMore]);
+
+  return (
+    <div className="sheet-back" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} className="sheet-inner">
+        <div className="sheet-handle-row"><div className="sheet-handle" /></div>
+        <div className={styles.sheetHeader}>
+          <div className={styles.sheetHeaderRow}>
+            <span className={`t-display ${styles.sheetTitle}`}>검색</span>
+            <button onClick={onClose} className="icon-btn" style={{ width: 36, height: 36, border: '2.5px solid var(--ink)' }}>
+              <Icon name="close" size={18} />
+            </button>
+          </div>
+          <div className={`card-flat ${styles.sheetSearchBox}`}>
+            <Icon name="search" size={20} />
+            <input ref={inputRef} value={q} onChange={e => setQ(e.target.value)}
+              placeholder="제목을 입력하세요" className="field-input" />
+            {q && <button onClick={() => setQ('')} className="btn-reset"><Icon name="close" size={18} /></button>}
+          </div>
+        </div>
+        <div className={`screen ${styles.sheetBody}`}>
+          {results.map((r, i) => (
+            <button key={i} onClick={() => onSelect(r)} className={styles.searchItem} style={{ borderBottom: '1.5px solid rgba(43,33,24,0.08)' }}>
+              {r.coverUrl
+                ? <img src={r.coverUrl} alt="" className={styles.searchCover} />
+                : <div className={styles.searchCoverPlaceholder}><Icon name={CATS[cat].icon} size={16} /></div>
+              }
+              <span style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                <strong className={styles.searchItemTitle}>{r.title}</strong>
+                {(r.creator || r.sub) && (
+                  <span className={`muted ${styles.searchItemSub}`}>{[r.creator, r.sub].filter(Boolean).join(' · ')}</span>
+                )}
+              </span>
+            </button>
+          ))}
+          {loading && <div className={`muted ${styles.searchLoadingMsg}`}>불러오는 중...</div>}
+          {!loading && !results.length && q.trim() && (
+            <div className={`muted ${styles.noResultMsg}`}>'{q}' 검색 결과가 없어요.</div>
+          )}
+          <div ref={loaderRef} style={{ height: 1 }} />
         </div>
       </div>
     </div>

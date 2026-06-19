@@ -380,6 +380,24 @@
 .searchItemTitle { font-size: 14px; display: block; line-height: 1.3; }
 .searchItemSub { font-size: 12px; display: block; margin-top: 2px; }
 
+.searchMoreBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 11px 14px;
+  border: none;
+  border-top: 1.5px solid rgba(43,33,24,0.12);
+  background: var(--paper-2);
+  font-family: var(--font-head);
+  font-size: 13px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.searchMoreBtn:active { background: var(--paper); }
+
+.searchLoadingMsg { font-size: 14px; padding: 16px 4px; text-align: center; }
+
 /* ── 회차 매칭 배너 ── */
 .matchBanner {
   background: color-mix(in srgb, var(--yellow) 25%, #fff);

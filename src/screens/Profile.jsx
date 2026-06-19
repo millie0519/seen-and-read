@@ -234,10 +234,12 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
                   <span className={styles.metaText}>{rec.place}</span>
                 </div>
               )}
-              <div className={styles.metaRowCenter}>
-                <span className={styles.metaIconCenter}><Icon name="face" size={16} /></span>
-                <span className={styles.metaText}>{rec.with || '혼자'}</span>
-              </div>
+              {rec.with && (
+                <div className={styles.metaRowCenter}>
+                  <span className={styles.metaIconCenter}><Icon name="face" size={16} /></span>
+                  <span className={styles.metaText}>{rec.with}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -245,7 +247,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
         <div className={styles.detailBody}>
           {rec.quotes?.map((q, i) => (
             <div key={i} className={styles.quoteCard}>
-              <span className={styles.quoteAccent}><Icon name="quote" size={30} style={{ transform: 'rotate(180deg)' }} /></span>
+              <span className={styles.quoteAccent}><Icon name="quote" size={18} style={{ transform: 'rotate(180deg)' }} /></span>
               <div className={styles.quoteCardText}>{q}</div>
             </div>
           ))}

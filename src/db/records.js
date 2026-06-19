@@ -297,6 +297,20 @@ export async function fetchRecentPeople() {
   return db.people.orderBy('used_at').reverse().limit(10).toArray();
 }
 
+export async function fetchRecentPlaces() {
+  const logs = await db.logs.orderBy('created_at').reverse().toArray();
+  const seen = new Set();
+  const places = [];
+  for (const log of logs) {
+    if (log.place && !seen.has(log.place)) {
+      seen.add(log.place);
+      places.push(log.place);
+      if (places.length >= 5) break;
+    }
+  }
+  return places;
+}
+
 export async function searchPeople(q) {
   return db.people.orderBy('used_at').reverse().filter(p => p.name.includes(q)).toArray();
 }
