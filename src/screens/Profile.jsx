@@ -2,6 +2,7 @@ import React from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CATS } from '../data.js';
 import { Icon, Stars, CatChip, Squiggle, SectionHead, StatusPills, statusPills } from '../components/ui.jsx';
+import { PhotoSlider } from '../components/PhotoSlider.jsx';
 import { fetchAllRecordViews, fetchRecordView, deleteRecord, addReplayLog } from '../db/records.js';
 import { db } from '../db/index.js';
 import styles from './Profile.module.css';
@@ -253,6 +254,9 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
           ))}
 
           {rec.note && <p className={styles.noteText}>{rec.note}</p>}
+          <div style={{ margin: '20px 0 0' }}>
+            {rec.photos?.length > 0 && <PhotoSlider photos={rec.photos} />}
+          </div>
 
           {rec.logs && rec.logs.length > 1 && (
             <div className={styles.timeline}>

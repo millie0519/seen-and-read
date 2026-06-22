@@ -2,6 +2,7 @@ import React from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CATS } from '../data.js';
 import { Icon, Stars, CatChip, Squiggle, StatusPills } from '../components/ui.jsx';
+import { PhotoSlider } from '../components/PhotoSlider.jsx';
 import { fetchAllRecordViews } from '../db/records.js';
 import styles from './Home.module.css';
 
@@ -53,6 +54,11 @@ function FeedPost({ rec, onOpen }) {
           <div className={styles.quoteBox}>
             <span className={styles.quoteAccent}><Icon name="quote" size={14} style={{ transform: 'rotate(180deg)' }} /> </span>
             {rec.quote}
+          </div>
+        )}
+        {rec.photos?.length > 0 && (
+          <div style={{ margin: '15px 0 0' }} onClick={e => e.stopPropagation()}>
+            <PhotoSlider photos={rec.photos} />
           </div>
         )}
       </div>

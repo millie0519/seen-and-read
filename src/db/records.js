@@ -46,6 +46,7 @@ function buildView(log, title, quotes, siblings) {
     note:     log.one_liner || null,
     with:     log.companions?.length ? log.companions.join(', ') : null,
     tags:     log.tags    || [],
+    photos:   log.photos  || [],
     quote:    quotes.sort((a,b) => (a.seq??0)-(b.seq??0))[0]?.text || null,
     quotes:   quotes.sort((a,b) => (a.seq??0)-(b.seq??0)).map(q => q.text),
     when:      fmtIso(log.date_single) || fmtIso(log.date_start) || log.date_start || whenString(log.created_at),
@@ -171,7 +172,7 @@ export async function findExistingByRef(externalRef) {
 }
 
 export async function saveNewRecord(base) {
-  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, times } = base;
+  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, times, photos } = base;
   const colors   = CAT_COLORS[cat] || {};
   const longForm = ['book', 'drama', 'etc'].includes(cat);
   const now      = Date.now();
@@ -207,6 +208,7 @@ export async function saveNewRecord(base) {
       place_geo:   null,
       companions:  withStr ? withStr.split(', ').filter(Boolean) : [],
       tags:        tags || [],
+      photos:      photos || [],
       created_at:  now,
     });
 
@@ -222,7 +224,7 @@ export async function updateRecord(logId, patch) {
   const log = await db.logs.get(logId);
   if (!log) return;
 
-  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl } = patch;
+  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, photos } = patch;
   const colors   = cat ? CAT_COLORS[cat] : {};
   const longForm = ['book', 'drama', 'etc'].includes(cat);
 
@@ -245,6 +247,7 @@ export async function updateRecord(logId, patch) {
       place:       place || null,
       companions:  withStr ? withStr.split(', ').filter(Boolean) : [],
       tags:        tags || [],
+      photos:      photos || [],
       date_single: !longForm ? (dateSingle || null) : null,
       date_start:  longForm ? (span?.start || null) : null,
       date_end:    longForm ? (span?.end   || null) : null,
@@ -289,6 +292,7 @@ export async function addReplayLog(titleId, currentTimes, logData) {
     place_geo:   null,
     companions:  [],
     tags:        [],
+    photos:      logData.photos || [],
     created_at:  Date.now(),
   });
 }

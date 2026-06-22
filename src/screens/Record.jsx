@@ -4,6 +4,7 @@ import { Icon, Stars } from '../components/ui.jsx';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { saveNewRecord, updateRecord, fetchRecentPeople, searchPeople, touchPerson, deletePerson, addReplayLog, findExistingByRef, fetchRecentPlaces } from '../db/records.js';
 import { searchByCategory, searchMoreByCategory, fetchCredits } from '../api/search.js';
+import { resizeImage } from '../utils/image.js';
 import styles from './Record.module.css';
 
 const CAT_COLORS = {
@@ -46,6 +47,7 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
   const [sheet, setSheet]               = React.useState(null);
   const [saving, setSaving]             = React.useState(false);
   const [coverUrl, setCoverUrl]         = React.useState(base.coverUrl ?? null);
+  const [photos, setPhotos]             = React.useState(initialRec?.photos ?? []);
   const [externalRef, setExRef]         = React.useState(null);
   const [searchResults, setResults]     = React.useState([]);
   const [searchOpen, setSearchOpen]     = React.useState(false);
@@ -54,6 +56,7 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
   );
   const [saveAsReplay, setSaveAsReplay] = React.useState(isReplay);
 
+  const photoInputRef = React.useRef(null);
   const startDateRef  = React.useRef(null);
   const endDateRef    = React.useRef(null);
   const singleDateRef = React.useRef(null);
@@ -127,6 +130,16 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
     ? [{ k: 'done', l: doneLabel }, { k: 'watching', l: '보는 중' }, { k: 'dropped', l: '중도하차' }]
     : [{ k: 'done', l: doneLabel }, { k: 'dropped', l: '중도하차' }];
 
+  const handlePhotoChange = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const remaining = 10 - photos.length;
+    const toProcess = files.slice(0, remaining);
+    const resized = await Promise.all(toProcess.map(f => resizeImage(f)));
+    setPhotos(prev => [...prev, ...resized]);
+    e.target.value = '';
+  };
+
   const addQuote    = () => setQuotes(qs => [...qs, '']);
   const removeQuote = (i) => setQuotes(qs => qs.filter((_, j) => j !== i));
   const updateQuote = (i, val) => setQuotes(qs => qs.map((q, j) => j === i ? val : q));
@@ -144,9 +157,10 @@ const fmtDate = (iso) => {
       if (saveAsReplay && existingTitle && !isEdit) {
         await addReplayLog(existingTitle.id, existingTitle.logCount, {
           rating,
-          date:  endDate || null,
-          note:  note.trim() || null,
-          place: place || null,
+          date:   endDate || null,
+          note:   note.trim() || null,
+          place:  place || null,
+          photos: photos.length ? photos : [],
         });
       } else {
         const now = new Date();
@@ -162,6 +176,7 @@ const fmtDate = (iso) => {
           place:       place || null,
           externalRef: externalRef || null,
           coverUrl:    coverUrl || null,
+          photos:      photos,
           ...(longForm ? {
             span: {
               start: startDate || now.toISOString().slice(0, 10),
@@ -413,8 +428,41 @@ const fmtDate = (iso) => {
         </button>
 
         <label className={`t-head ${styles.lbl}`}>기록에 더하기</label>
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: 'none' }}
+          onChange={handlePhotoChange}
+        />
+        {photos.length > 0 && (
+          <div className={styles.photoPreviewRow}>
+            {photos.map((src, i) => (
+              <div key={i} className={styles.photoThumb}>
+                <img src={src} alt="" className={styles.photoThumbImg} />
+                <button
+                  type="button"
+                  className={styles.photoThumbDel}
+                  onClick={() => setPhotos(ps => ps.filter((_, j) => j !== i))}
+                >
+                  <Icon name="close" size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <div className={styles.attachRow}>
-          <span className="pill pill-xl" style={{ background: 'var(--yellow)', cursor: 'pointer' }}><Icon name="camera" size={17} />사진</span>
+          <button
+            type="button"
+            className="filter-btn"
+            onClick={() => photoInputRef.current?.click()}
+            disabled={photos.length >= 10}
+          >
+            <span className="pill pill-xl" style={{ background: photos.length ? 'var(--yellow)' : undefined }}>
+              <Icon name="camera" size={17} />사진{photos.length > 0 ? ` ${photos.length}/10` : ''}
+            </span>
+          </button>
           <button onClick={() => setSheet('place')} className="filter-btn">
             <span className="pill pill-xl" style={{ background: place ? 'var(--mint)' : undefined }}>
               <Icon name="pin" size={17} />{place || '장소'}
