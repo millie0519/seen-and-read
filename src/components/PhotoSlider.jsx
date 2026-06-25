@@ -21,7 +21,7 @@ export function PhotoSlider({ photos }) {
       <Swiper
         modules={[Pagination]}
         pagination={{ clickable: true }}
-        spaceBetween={0}
+        spaceBetween={8}
         slidesPerView={1}
       >
         {photos.map((src, i) => (

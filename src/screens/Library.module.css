@@ -105,7 +105,7 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='14'%3E%3Crect x='3' y='3.5' width='7' height='8' rx='2' ry='2' fill='%23fff'/%3E%3C/svg%3E");
   background-size: 10px 12px;
   background-repeat: repeat-x;
-  background-position: left center;
+  background-position: -2px center;
 }
 
 .movieCardPhoto {

@@ -207,6 +207,7 @@
 
 .heroMeta { flex: 1; min-width: 0; padding-top: 2px; text-align: center; }
 .heroTitle { font-size: 24px; margin: 0 0 4px; line-height: 1.1; }
+.heroTitleYear { font-size: 16px; font-family: var(--font-body); }
 .heroCreator { font-size: 14px; margin-bottom: 10px; word-break: keep-all; }
 .heroStars { margin-bottom: 12px; }
 .heroStatus { margin-bottom: 12px; }

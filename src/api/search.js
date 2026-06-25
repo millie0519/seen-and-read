@@ -22,18 +22,20 @@ export async function searchMoreByCategory(cat, query, page = 1) {
 
 async function searchBooks(query) {
   try {
-    const res = await fetch(
-      `/api/naver-search?query=${encodeURIComponent(query)}&display=5`
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.items || []).map(item => ({
-      title:       strip(item.title),
-      creator:     strip(item.author),
-      coverUrl:    item.image || null,
-      externalRef: `naver:book:${item.isbn}`,
-      sub:         item.publisher || null,
+    const variants = spaceVariants(query);
+    const all = await Promise.all(variants.map(async q => {
+      const res = await fetch(`/api/naver-search?query=${encodeURIComponent(q)}&display=5`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.items || []).map(item => ({
+        title:       strip(item.title),
+        creator:     strip(item.author),
+        coverUrl:    item.image || null,
+        externalRef: `naver:book:${item.isbn}`,
+        sub:         item.publisher || null,
+      }));
     }));
+    return dedup(all.flat());
   } catch {
     return [];
   }
@@ -41,19 +43,23 @@ async function searchBooks(query) {
 
 async function searchMovies(query) {
   try {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(query)}&language=ko-KR`,
-      { headers: { Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}` } }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.results || []).slice(0, 5).map(item => ({
-      title:       item.title,
-      creator:     null,
-      coverUrl:    item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
-      externalRef: `tmdb:movie:${item.id}`,
-      sub:         item.release_date?.slice(0, 4) || null,
+    const variants = spaceVariants(query);
+    const all = await Promise.all(variants.map(async q => {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(q)}&language=ko-KR`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}` } }
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.results || []).slice(0, 5).map(item => ({
+        title:       item.title,
+        creator:     null,
+        coverUrl:    item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+        externalRef: `tmdb:movie:${item.id}`,
+        sub:         item.release_date?.slice(0, 4) || null,
+      }));
     }));
+    return dedup(all.flat());
   } catch {
     return [];
   }
@@ -61,19 +67,23 @@ async function searchMovies(query) {
 
 async function searchTV(query) {
   try {
-    const res = await fetch(
-      `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(query)}&language=ko-KR`,
-      { headers: { Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}` } }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return (data.results || []).slice(0, 5).map(item => ({
-      title:       item.name,
-      creator:     null,
-      coverUrl:    item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
-      externalRef: `tmdb:tv:${item.id}`,
-      sub:         item.first_air_date?.slice(0, 4) || null,
+    const variants = spaceVariants(query);
+    const all = await Promise.all(variants.map(async q => {
+      const res = await fetch(
+        `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(q)}&language=ko-KR`,
+        { headers: { Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}` } }
+      );
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.results || []).slice(0, 5).map(item => ({
+        title:       item.name,
+        creator:     null,
+        coverUrl:    item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : null,
+        externalRef: `tmdb:tv:${item.id}`,
+        sub:         item.first_air_date?.slice(0, 4) || null,
+      }));
     }));
+    return dedup(all.flat());
   } catch {
     return [];
   }
@@ -166,4 +176,30 @@ export async function fetchCredits(externalRef) {
 
 function strip(str) {
   return str ? str.replace(/<[^>]+>/g, '').trim() : '';
+}
+
+function dedup(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    if (seen.has(item.externalRef)) return false;
+    seen.add(item.externalRef);
+    return true;
+  });
+}
+
+function spaceVariants(query) {
+  const variants = new Set([query]);
+  const stripped = query.replace(/\s+/g, '');
+
+  if (stripped !== query) {
+    // 공백 있는 쿼리 → 공백 제거 버전도 추가
+    variants.add(stripped);
+  } else if (stripped.length <= 8) {
+    // 공백 없는 짧은 쿼리 → 모든 위치에 공백 삽입 시도
+    for (let i = 1; i < stripped.length; i++) {
+      variants.add(stripped.slice(0, i) + ' ' + stripped.slice(i));
+    }
+  }
+
+  return [...variants];
 }

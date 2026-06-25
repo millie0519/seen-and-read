@@ -37,7 +37,8 @@ function buildView(log, title, quotes, siblings) {
     creator:  title.creator,
     cover:    title.cover_color,
     coverFg:  title.cover_fg,
-    coverUrl: title.meta?.coverUrl || null,
+    coverUrl:    title.meta?.coverUrl    || null,
+    releaseYear: title.meta?.releaseYear || null,
     status:   log.status,
     rating:   log.rating,
     n:        log.n,
@@ -172,7 +173,7 @@ export async function findExistingByRef(externalRef) {
 }
 
 export async function saveNewRecord(base) {
-  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, times, photos } = base;
+  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, releaseYear, times, photos } = base;
   const colors   = CAT_COLORS[cat] || {};
   const longForm = ['book', 'drama', 'etc'].includes(cat);
   const now      = Date.now();
@@ -188,7 +189,7 @@ export async function saveNewRecord(base) {
       cover_color: colors.cover_color,
       cover_fg:    colors.cover_fg,
       external_ref: externalRef || null,
-      meta:         coverUrl ? { coverUrl } : null,
+      meta:         (coverUrl || releaseYear) ? { ...(coverUrl ? { coverUrl } : {}), ...(releaseYear ? { releaseYear } : {}) } : null,
       created_at:   now,
     });
 
@@ -224,11 +225,12 @@ export async function updateRecord(logId, patch) {
   const log = await db.logs.get(logId);
   if (!log) return;
 
-  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, photos } = patch;
+  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, releaseYear, photos } = patch;
   const colors   = cat ? CAT_COLORS[cat] : {};
   const longForm = ['book', 'drama', 'etc'].includes(cat);
 
   await db.transaction('rw', db.titles, db.logs, db.quotes, async () => {
+    const existing = await db.titles.get(log.title_id);
     const titlePatch = {
       ...(cat      && { category: cat }),
       ...(title    && { title: title.trim() }),
@@ -236,7 +238,13 @@ export async function updateRecord(logId, patch) {
       ...(colors.cover_color && { cover_color: colors.cover_color }),
       ...(colors.cover_fg    && { cover_fg:    colors.cover_fg    }),
       ...(externalRef !== undefined && { external_ref: externalRef || null }),
-      ...(coverUrl    !== undefined && { meta: coverUrl ? { coverUrl } : null }),
+      ...((coverUrl !== undefined || releaseYear !== undefined) && {
+        meta: {
+          ...(existing?.meta || {}),
+          ...(coverUrl    !== undefined ? { coverUrl:    coverUrl    || undefined } : {}),
+          ...(releaseYear !== undefined ? { releaseYear: releaseYear || undefined } : {}),
+        },
+      }),
     };
     if (Object.keys(titlePatch).length) await db.titles.update(log.title_id, titlePatch);
 

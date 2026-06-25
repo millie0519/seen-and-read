@@ -35,9 +35,9 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
   const [times, setTimes]               = React.useState(isReplay ? (replayFor.n + 1) : (initialRec?.times ?? 1));
   const [note, setNote]                 = React.useState(initialRec?.note ?? '');
   const [quotes, setQuotes]             = React.useState(initialRec?.quotes?.length ? initialRec.quotes : ['']);
-  const [startDate, setStartDate]       = React.useState(initialRec?.rawStart ?? '');
+  const [startDate, setStartDate]       = React.useState(initialRec?.rawStart ?? new Date().toISOString().slice(0, 10));
   const [endDate, setEndDate]           = React.useState(
-    ['book','drama','etc'].includes(base.cat) ? (initialRec?.rawEnd ?? '') : (initialRec?.rawSingle ?? '')
+    ['book','drama','etc'].includes(base.cat ?? 'book') ? (initialRec?.rawEnd ?? '') : (initialRec?.rawSingle ?? new Date().toISOString().slice(0, 10))
   );
   const [stillWatching, setStillWatch]  = React.useState(initialRec?.span ? !initialRec.rawEnd : false);
   const [place, setPlace]               = React.useState(initialRec?.place ?? null);
@@ -47,6 +47,7 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
   const [sheet, setSheet]               = React.useState(null);
   const [saving, setSaving]             = React.useState(false);
   const [coverUrl, setCoverUrl]         = React.useState(base.coverUrl ?? null);
+  const [releaseYear, setReleaseYear]   = React.useState(base.releaseYear ?? null);
   const [photos, setPhotos]             = React.useState(initialRec?.photos ?? []);
   const [externalRef, setExRef]         = React.useState(null);
   const [searchResults, setResults]     = React.useState([]);
@@ -83,6 +84,8 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
     if (isEdit || isReplay) return;
     const isLong = ['book', 'drama', 'etc'].includes(cat);
     setStatus(isLong ? null : 'done');
+    if (isLong) setEndDate('');
+    else if (!endDate) setEndDate(new Date().toISOString().slice(0, 10));
   }, [cat]);
 
   React.useEffect(() => {
@@ -109,6 +112,7 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
     setExRef(result.externalRef || null);
     setSearchOpen(false);
     setResults([]);
+    setReleaseYear(result.sub || null);
     if (result.externalRef?.startsWith('tmdb:')) {
       const credits = await fetchCredits(result.externalRef);
       setCreator(credits || result.creator || '');
@@ -174,8 +178,9 @@ const fmtDate = (iso) => {
           tags:        [],
           with:        people.length ? people.join(', ') : null,
           place:       place || null,
-          externalRef: externalRef || null,
-          coverUrl:    coverUrl || null,
+          externalRef:  externalRef || null,
+          coverUrl:     coverUrl || null,
+          releaseYear:  releaseYear || null,
           photos:      photos,
           ...(longForm ? {
             span: {
@@ -560,6 +565,12 @@ function PlaceSheet({ onClose, onPick }) {
           {q.trim() ? (
             <>
               {loading && <div className={`muted ${styles.searchLoadingMsg}`}>검색 중...</div>}
+              {!loading && (
+                <button onClick={() => onPick(q.trim())} className={styles.rowBtn}>
+                  <span style={{ color: 'var(--ink-soft)', flex: 'none' }}><Icon name="edit" size={18} /></span>
+                  <span className={`t-head`} style={{ fontSize: 15 }}>'{q}' 직접 입력</span>
+                </button>
+              )}
               {!loading && results.map((m, i) => (
                 <button key={i} onClick={() => onPick(m.name)} className={styles.rowBtn}>
                   <span style={{ color: 'var(--coral-d)', flex: 'none' }}><Icon name="pin" size={20} /></span>
@@ -571,12 +582,6 @@ function PlaceSheet({ onClose, onPick }) {
               ))}
               {!loading && !results.length && (
                 <div className={`muted ${styles.noResultMsg}`}>'{q}' 검색 결과가 없어요.</div>
-              )}
-              {!loading && (
-                <button onClick={() => onPick(q.trim())} className={styles.rowBtn}>
-                  <span style={{ color: 'var(--ink-soft)', flex: 'none' }}><Icon name="edit" size={18} /></span>
-                  <span className={`t-head`} style={{ fontSize: 15 }}>'{q}' 직접 입력</span>
-                </button>
               )}
             </>
           ) : (

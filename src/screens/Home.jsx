@@ -39,7 +39,9 @@ function FeedPost({ rec, onOpen }) {
 
       <div className={styles.caption}>
         <div className={styles.captionTop}>
-          <span className={`t-head ${styles.captionTitle}`}>{rec.title}</span>
+          <span className={`t-head ${styles.captionTitle}`}>
+            {rec.title}{rec.releaseYear && <span className={`muted ${styles.captionYear}`}> ({rec.releaseYear})</span>}
+          </span>
           <div className={styles.rgt}>
             <button onClick={(e) => { e.stopPropagation(); setSaved(v => !v); }} className="btn-reset">
               <Icon name={saved ? 'bookmark' : 'bookmarkBorder'} size={24} fill={saved ? 'var(--green)' : 'none'} />

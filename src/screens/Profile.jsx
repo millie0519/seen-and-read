@@ -212,7 +212,9 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
           </div>
 
           <div className={styles.heroMeta}>
-            <h2 className={`t-display ${styles.heroTitle}`}>{rec.title}</h2>
+            <h2 className={`t-display ${styles.heroTitle}`}>
+              {rec.title}{rec.releaseYear && <span className={`muted ${styles.heroTitleYear}`}> ({rec.releaseYear})</span>}
+            </h2>
             <div className={`muted ${styles.heroCreator}`}>{rec.creator}</div>
             <div className={styles.heroStars}><Stars value={rec.rating} size={19} gap={3} /></div>
             <div className={styles.metaRowWrap}>
