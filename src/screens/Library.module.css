@@ -35,84 +35,103 @@
 }
 .filterRow::-webkit-scrollbar { display: none; }
 
-.recentGrid {
+/* ── 공통 그리드 & 제목 ── */
+.catGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
-.recentItem { cursor: pointer; }
-.recentTitle { font-size: 13px; margin-top: 6px; line-height: 1.2; }
-.recentStars { margin-top: 2px; }
-
-.bookSection { margin-bottom: 24px; }
-
-.bookRow {
-  display: flex;
-  gap: 6px;
-  align-items: flex-end;
-  overflow-x: auto;
-  padding-bottom: 8px;
+.cardTitle {
+  font-size: 14px;
+  text-align: center;
+  line-height: 1.2;
+  margin-top: 10px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
-.bookSpine {
-  width: 46px;
-  border: 2px solid var(--ink);
-  border-radius: 4px 4px 2px 2px;
-  flex: none;
+/* ── 책 프레임 ── */
+.bookItem { cursor: pointer; }
+
+.bookCard {
+  aspect-ratio: 2 / 3;
   position: relative;
+  border: 2.5px solid var(--ink);
+  border-radius: 5px 12px 12px 5px;
+  box-shadow: 2px 2px 0 var(--ink-soft);
+  overflow: hidden;
+}
+
+.bookCard::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 9px;
+  background: rgba(0, 0, 0, 0.22);
+  border-right: 1.5px solid rgba(0, 0, 0, 0.25);
+  z-index: 1;
+}
+
+.bookCardCover {
+  width: 100%;
+  height: 100%;
   display: flex;
-  align-items: flex-end;
-  padding: 6px;
-  box-sizing: border-box;
-  cursor: pointer;
+  align-items: center;
+  justify-content: center;
 }
 
-.bookSpineTitle {
-  writing-mode: vertical-rl;
-  font-family: var(--font-head);
-  font-size: 11px;
-  line-height: 1;
-}
-
-.shelfPlank {
-  height: 8px;
-  background: var(--ink);
-  border-radius: 3px;
-  margin-top: -2px;
-}
-
-.shelfBase {
-  height: 14px;
-  background: var(--paper-2);
-  border-left: 2.5px solid var(--ink);
-  border-right: 2.5px solid var(--ink);
-  border-bottom: 2.5px solid var(--ink);
-  border-radius: 0 0 8px 8px;
-}
-
-.movieGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
+/* ── 필름 프레임 ── */
+.movieItem { cursor: pointer; }
 
 .movieCard {
-  width: 100%;
-  height: 150px;
-  border: 2.5px solid var(--ink);
-  border-radius: 12px;
-  box-shadow: var(--shadow-sm);
+  background: #221C14;
+  border-radius: 5px;
+  padding: 0 5px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 10px;
-  box-sizing: border-box;
-  cursor: pointer;
+  aspect-ratio: 2 / 3;
 }
 
-.movieCardHeader { display: flex; justify-content: flex-end; opacity: 0.85; }
-.movieCardTitle { font-size: 17px; line-height: 1.05; }
+.movieCard::before,
+.movieCard::after {
+  content: "";
+  height: 15px;
+  flex: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='14'%3E%3Crect x='3' y='3.5' width='7' height='8' rx='2' ry='2' fill='%23fff'/%3E%3C/svg%3E");
+  background-size: 10px 12px;
+  background-repeat: repeat-x;
+  background-position: left center;
+}
+
+.movieCardPhoto {
+  flex: 1;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  background: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── 일반 카테고리 카드 ── */
+.catItem { cursor: pointer; }
+
+.catCard {
+  aspect-ratio: 2 / 3;
+  position: relative;
+  border: 2.5px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .emptyMsg { text-align: center; font-size: 14px; padding: 40px 0; }

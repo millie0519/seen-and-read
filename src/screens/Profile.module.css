@@ -210,8 +210,9 @@
 .heroCreator { font-size: 14px; margin-bottom: 10px; word-break: keep-all; }
 .heroStars { margin-bottom: 12px; }
 .heroStatus { margin-bottom: 12px; }
-.metaRows { display: flex; flex-direction: column; gap: 7px; }
 
+.metaRowWrap {display: flex; justify-content: center;}
+.metaRows { display: flex; flex-direction: column; gap: 7px; }
 .metaRow { display: flex; align-items: flex-start; gap: 7px; }
 .metaRowCenter { display: flex; align-items: center; gap: 7px; }
 .metaIcon { color: var(--ink-soft); display: flex; margin-top: 1px; }

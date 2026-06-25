@@ -215,32 +215,34 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
             <h2 className={`t-display ${styles.heroTitle}`}>{rec.title}</h2>
             <div className={`muted ${styles.heroCreator}`}>{rec.creator}</div>
             <div className={styles.heroStars}><Stars value={rec.rating} size={19} gap={3} /></div>
-            <div className={styles.metaRows}>
-              {rec.span ? (
-                <div className={styles.metaRow}>
-                  <span className={styles.metaIcon}><Icon name="calendar" size={16} /></span>
-                  <span className={styles.metaText}>
-                    {rec.span.start} ~ {rec.span.end || '진행 중'}
-                  </span>
-                </div>
-              ) : (
-                <div className={styles.metaRowCenter}>
-                  <span className={styles.metaIconCenter}><Icon name="calendar" size={16} /></span>
-                  <span className={styles.metaText}>{rec.when}</span>
-                </div>
-              )}
-              {rec.place && (
-                <div className={styles.metaRowCenter}>
-                  <span className={styles.metaIconCenter}><Icon name="pin" size={16} /></span>
-                  <span className={styles.metaText}>{rec.place}</span>
-                </div>
-              )}
-              {rec.with && (
-                <div className={styles.metaRowCenter}>
-                  <span className={styles.metaIconCenter}><Icon name="face" size={16} /></span>
-                  <span className={styles.metaText}>{rec.with}</span>
-                </div>
-              )}
+            <div className={styles.metaRowWrap}>
+              <div className={styles.metaRows}>
+                {rec.span ? (
+                  <div className={styles.metaRow}>
+                    <span className={styles.metaIcon}><Icon name="calendar" size={16} /></span>
+                    <span className={styles.metaText}>
+                      {rec.span.start} ~ {rec.span.end || '진행 중'}
+                    </span>
+                  </div>
+                ) : (
+                  <div className={styles.metaRowCenter}>
+                    <span className={styles.metaIconCenter}><Icon name="calendar" size={16} /></span>
+                    <span className={styles.metaText}>{rec.when}</span>
+                  </div>
+                )}
+                {rec.place && (
+                  <div className={styles.metaRowCenter}>
+                    <span className={styles.metaIconCenter}><Icon name="pin" size={16} /></span>
+                    <span className={styles.metaText}>{rec.place}</span>
+                  </div>
+                )}
+                {rec.with && (
+                  <div className={styles.metaRowCenter}>
+                    <span className={styles.metaIconCenter}><Icon name="face" size={16} /></span>
+                    <span className={styles.metaText}>{rec.with}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -1,23 +1,90 @@
 import React from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { CATS } from '../data.js';
-import { Icon, Stars, CatChip, Poster, Squiggle, SectionHead } from '../components/ui.jsx';
+import { Icon, Squiggle, SectionHead } from '../components/ui.jsx';
 import { fetchAllRecordViews } from '../db/records.js';
 import styles from './Library.module.css';
+
+const CAT_SUFFIX = {
+  book: '권', movie: '편', drama: '편',
+  exhibit: '개', stage: '편', concert: '회',
+  sports: '경기', festival: '개', etc: '개',
+};
+
+function renderCard(rec, onOpen, styles) {
+  if (rec.cat === 'book') {
+    return (
+      <div key={rec.id} onClick={() => onOpen(rec.id)} className={styles.bookItem}>
+        <div className={styles.bookCard}>
+          <div className={styles.bookCardCover} style={{ background: rec.cover, color: rec.coverFg }}>
+            {rec.coverUrl ? (
+              <img src={rec.coverUrl} alt={rec.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <Icon name="book" size={28} />
+            )}
+          </div>
+        </div>
+        <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+      </div>
+    );
+  }
+
+  if (rec.cat === 'movie') {
+    return (
+      <div key={rec.id} onClick={() => onOpen(rec.id)} className={styles.movieItem}>
+        <div className={styles.movieCard}>
+          <div className={styles.movieCardPhoto} style={{ background: rec.cover, color: rec.coverFg }}>
+            {rec.coverUrl ? (
+              <img src={rec.coverUrl} alt={rec.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <Icon name="film" size={28} />
+            )}
+          </div>
+        </div>
+        <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div key={rec.id} onClick={() => onOpen(rec.id)} className={styles.catItem}>
+      <div className={styles.catCard} style={{ background: rec.cover, color: rec.coverFg }}>
+        {rec.coverUrl ? (
+          <img src={rec.coverUrl} alt={rec.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        ) : (
+          <Icon name={CATS[rec.cat]?.icon} size={28} />
+        )}
+      </div>
+      <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+    </div>
+  );
+}
 
 function LibraryScreen({ onOpen, onSearch }) {
   const [active, setActive] = React.useState('all');
   const records = useLiveQuery(fetchAllRecordViews, []) ?? [];
+
+  const total = records.length;
 
   const shelfCounts = Object.keys(CATS).map(cat => ({
     cat,
     n: records.filter(r => r.cat === cat).length,
   })).filter(c => c.n > 0);
 
-  const total    = records.length;
-  const filtered = active === 'all' ? records : records.filter(r => r.cat === active);
-  const books    = records.filter(r => r.cat === 'book');
-  const movies   = records.filter(r => r.cat === 'movie');
+  // 카테고리별 그룹 (최근 등록 카테고리 순)
+  const catOrder = [];
+  const catMap = {};
+  records.forEach(r => {
+    if (!catMap[r.cat]) {
+      catMap[r.cat] = [];
+      catOrder.push(r.cat);
+    }
+    catMap[r.cat].push(r);
+  });
+
+  const visibleCats = active === 'all'
+    ? catOrder
+    : catOrder.filter(c => c === active);
 
   return (
     <div className={`screen screen-anim ${styles.screen}`}>
@@ -51,58 +118,25 @@ function LibraryScreen({ onOpen, onSearch }) {
         ))}
       </div>
 
-      <SectionHead title="📌 최근 추가" action="더보기" />
-      <div className={styles.recentGrid}>
-        {filtered.slice(0, 3).map(rec => (
-          <div key={rec.id} onClick={() => onOpen(rec.id)} className={styles.recentItem}>
-            <Poster rec={rec} w={'100%'} h={148} radius={12} />
-            <div className={`t-head ${styles.recentTitle}`}>{rec.title}</div>
-            <div className={styles.recentStars}><Stars value={rec.rating} size={11} /></div>
-          </div>
-        ))}
-      </div>
+      {visibleCats.map(cat => {
+        const items = catMap[cat];
+        const isFiltered = active !== 'all';
+        const shown = isFiltered ? items : items.slice(0, 6);
+        const hasMore = !isFiltered && items.length > 6;
 
-      {books.length > 0 && <SectionHead title={`📚 책 ${books.length}권`} action="정렬" />}
-      {books.length > 0 && (
-        <div className={styles.bookSection}>
-          <div className={styles.bookRow}>
-            {books.map((b, i) => (
-              <div
-                key={b.id}
-                onClick={() => onOpen(b.id)}
-                className={styles.bookSpine}
-                style={{
-                  height: 110 + (i % 3) * 14,
-                  background: b.cover,
-                  color: b.coverFg,
-                  transform: `rotate(${(i % 4 - 1.5) * 0.6}deg)`,
-                }}
-              >
-                <div className={styles.bookSpineTitle}>{b.title}</div>
-              </div>
-            ))}
-          </div>
-          <div className={styles.shelfPlank} />
-          <div className={styles.shelfBase} />
-        </div>
-      )}
-
-      {movies.length > 0 && <SectionHead title={`🎬 영화 ${movies.length}편`} action="더보기" />}
-      {movies.length > 0 && (
-        <div className={styles.movieGrid}>
-          {movies.map(m => (
-            <div
-              key={m.id}
-              onClick={() => onOpen(m.id)}
-              className={styles.movieCard}
-              style={{ background: m.cover, color: m.coverFg }}
-            >
-              <div className={styles.movieCardHeader}><Icon name="film" size={16} /></div>
-              <div className={`t-display ${styles.movieCardTitle}`}>{m.title}</div>
+        return (
+          <React.Fragment key={cat}>
+            <SectionHead
+              title={`${CATS[cat].ko} ${items.length}${CAT_SUFFIX[cat] ?? '개'}`}
+              action={hasMore ? `전체보기` : undefined}
+              onAction={() => setActive(cat)}
+            />
+            <div className={styles.catGrid}>
+              {shown.map(rec => renderCard(rec, onOpen, styles))}
             </div>
-          ))}
-        </div>
-      )}
+          </React.Fragment>
+        );
+      })}
 
       {records.length === 0 && (
         <div className={`muted ${styles.emptyMsg}`}>아직 기록이 없어요</div>
