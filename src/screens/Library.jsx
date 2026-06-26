@@ -11,53 +11,96 @@ const CAT_SUFFIX = {
   sports: '경기', festival: '개', etc: '개',
 };
 
-function renderCard(rec, onOpen, styles) {
-  if (rec.cat === 'book') {
-    return (
-      <div key={rec.id} onClick={() => onOpen(rec.id)} className={styles.bookItem}>
-        <div className={styles.bookCard}>
-          <div className={styles.bookCardCover} style={{ background: rec.cover, color: rec.coverFg }}>
-            {rec.coverUrl ? (
-              <img src={rec.coverUrl} alt={rec.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <Icon name="book" size={28} />
-            )}
-          </div>
-        </div>
-        <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
-      </div>
-    );
-  }
+const COVER_IMG = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' };
 
-  if (rec.cat === 'movie') {
-    return (
-      <div key={rec.id} onClick={() => onOpen(rec.id)} className={styles.movieItem}>
-        <div className={styles.movieCard}>
-          <div className={styles.movieCardPhoto} style={{ background: rec.cover, color: rec.coverFg }}>
-            {rec.coverUrl ? (
-              <img src={rec.coverUrl} alt={rec.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <Icon name="film" size={28} />
-            )}
-          </div>
-        </div>
-        <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
-      </div>
-    );
-  }
-
+function BookCard({ rec, onOpen, styles }) {
   return (
-    <div key={rec.id} onClick={() => onOpen(rec.id)} className={styles.catItem}>
-      <div className={styles.catCard} style={{ background: rec.cover, color: rec.coverFg }}>
-        {rec.coverUrl ? (
-          <img src={rec.coverUrl} alt={rec.title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-        ) : (
-          <Icon name={CATS[rec.cat]?.icon} size={28} />
-        )}
+    <div onClick={() => onOpen(rec.id)} className={styles.bookItem}>
+      <div className={styles.bookCard}>
+        <div className={styles.bookCardCover} style={{ background: rec.cover, color: rec.coverFg }}>
+          {rec.coverUrl ? <img src={rec.coverUrl} alt={rec.title} style={COVER_IMG} /> : <Icon name="book" size={28} />}
+        </div>
       </div>
       <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
     </div>
   );
+}
+
+function MovieCard({ rec, onOpen, styles }) {
+  return (
+    <div onClick={() => onOpen(rec.id)} className={styles.movieItem}>
+      <div className={styles.movieCard}>
+        <div className={styles.movieCardPhoto} style={{ background: rec.cover, color: rec.coverFg }}>
+          {rec.coverUrl ? <img src={rec.coverUrl} alt={rec.title} style={COVER_IMG} /> : <Icon name="film" size={28} />}
+        </div>
+      </div>
+      <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+    </div>
+  );
+}
+
+
+function StageCard({ rec, onOpen, styles }) {
+  return (
+    <div onClick={() => onOpen(rec.id)} className={styles.stageItem}>
+      <div className={styles.stageCard}>
+        <div className={styles.stageCardContent}>
+          {rec.coverUrl ? <img src={rec.coverUrl} alt={rec.title} style={COVER_IMG} /> : <Icon name="mask" size={28} />}
+        </div>
+      </div>
+      <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+    </div>
+  );
+}
+
+function ExhibitCard({ rec, onOpen, styles }) {
+  return (
+    <div onClick={() => onOpen(rec.id)} className={styles.exhibitItem}>
+      <div className={styles.exhibitCard}>
+        <div className={styles.exhibitCardArtwork}>
+          {rec.coverUrl ? <img src={rec.coverUrl} alt={rec.title} style={COVER_IMG} /> : <Icon name="frame" size={28} />}
+        </div>
+      </div>
+      <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+    </div>
+  );
+}
+
+function DramaCard({ rec, onOpen, styles }) {
+  return (
+    <div onClick={() => onOpen(rec.id)} className={styles.dramaItem}>
+      <div className={styles.dramaCard}>
+        <div className={styles.dramaCardScreen} style={{ background: rec.cover, color: rec.coverFg }}>
+          {rec.coverUrl ? <img src={rec.coverUrl} alt={rec.title} style={COVER_IMG} /> : <Icon name="tv" size={28} />}
+        </div>
+      </div>
+      <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+    </div>
+  );
+}
+
+function DefaultCard({ rec, onOpen, styles }) {
+  return (
+    <div onClick={() => onOpen(rec.id)} className={styles.catItem}>
+      <div className={styles.catCard} style={{ background: rec.cover, color: rec.coverFg }}>
+        {rec.coverUrl ? <img src={rec.coverUrl} alt={rec.title} style={COVER_IMG} /> : <Icon name={CATS[rec.cat]?.icon} size={28} />}
+      </div>
+      <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+    </div>
+  );
+}
+
+const CARD_FRAMES = {
+  book:    BookCard,
+  movie:   MovieCard,
+  drama:   DramaCard,
+  stage:   StageCard,
+  exhibit: ExhibitCard,
+};
+
+function renderCard(rec, onOpen, styles) {
+  const Frame = CARD_FRAMES[rec.cat] ?? DefaultCard;
+  return <Frame key={rec.id} rec={rec} onOpen={onOpen} styles={styles} />;
 }
 
 function LibraryScreen({ onOpen, onSearch }) {

@@ -193,7 +193,7 @@
   flex: none;
   border: 2.5px solid var(--ink);
   border-radius: 14px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 3px 3px 0 var(--ink);
   overflow: hidden;
   display: flex;
   flex-direction: column;

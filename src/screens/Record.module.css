@@ -281,11 +281,11 @@
 .coverPreview {
   width: 150px;
   aspect-ratio: 2 / 3;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 2.5px solid var(--ink);
   overflow: hidden;
   margin: 0 auto 10px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 3px 3px 0 var(--ink);
   display: flex;
   align-items: center;
   justify-content: center;
