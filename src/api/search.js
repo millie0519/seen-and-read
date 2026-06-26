@@ -6,7 +6,9 @@ export async function searchByCategory(cat, query) {
     case 'book':  return searchBooks(query.trim());
     case 'movie': return searchMovies(query.trim());
     case 'drama': return searchTV(query.trim());
-    default:      return [];
+    case 'stage':   return searchStage(query.trim());
+    case 'concert': return searchConcert(query.trim());
+    default:        return [];
   }
 }
 
@@ -16,7 +18,9 @@ export async function searchMoreByCategory(cat, query, page = 1) {
     case 'book':  return searchBooksPage(query.trim(), page);
     case 'movie': return searchMoviesPage(query.trim(), page);
     case 'drama': return searchTVPage(query.trim(), page);
-    default:      return { items: [], hasMore: false };
+    case 'stage':   return searchStagePage(query.trim(), page);
+    case 'concert': return searchConcertPage(query.trim(), page);
+    default:        return { items: [], hasMore: false };
   }
 }
 
@@ -152,6 +156,74 @@ async function searchTVPage(query, page) {
   }
 }
 
+const STAGE_GENRES   = ['연극', '뮤지컬'];
+const CONCERT_GENRES = ['음악', '오페라'];
+
+async function searchStage(query) {
+  try {
+    const res = await fetch(`/api/kopis-search?query=${encodeURIComponent(query)}&rows=50`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const filtered = (data.items || []).filter(i => STAGE_GENRES.includes(i.genre));
+    return dedupByTitle(filtered);
+  } catch {
+    return [];
+  }
+}
+
+async function searchStagePage(query, page) {
+  try {
+    const res = await fetch(`/api/kopis-search?query=${encodeURIComponent(query)}&rows=50&page=${page}`);
+    if (!res.ok) return { items: [], hasMore: false };
+    const data = await res.json();
+    const items = dedupByTitle((data.items || []).filter(i => STAGE_GENRES.includes(i.genre)));
+    return { items, hasMore: (data.items || []).length === 50 };
+  } catch {
+    return { items: [], hasMore: false };
+  }
+}
+
+async function searchConcert(query) {
+  try {
+    const res = await fetch(`/api/kopis-search?query=${encodeURIComponent(query)}&rows=50`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    const filtered = (data.items || []).filter(i => CONCERT_GENRES.some(g => i.genre?.includes(g)));
+    return dedupByTitle(filtered);
+  } catch {
+    return [];
+  }
+}
+
+async function searchConcertPage(query, page) {
+  try {
+    const res = await fetch(`/api/kopis-search?query=${encodeURIComponent(query)}&rows=50&page=${page}`);
+    if (!res.ok) return { items: [], hasMore: false };
+    const data = await res.json();
+    const items = dedupByTitle((data.items || []).filter(i => CONCERT_GENRES.some(g => i.genre?.includes(g))));
+    return { items, hasMore: (data.items || []).length === 50 };
+  } catch {
+    return { items: [], hasMore: false };
+  }
+}
+
+export async function fetchKopisDetail(externalRef) {
+  if (!externalRef?.startsWith('kopis:')) return null;
+  const id = externalRef.split(':')[1];
+  try {
+    const res  = await fetch(`/api/kopis-detail?id=${id}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchKopisCredits(externalRef) {
+  const detail = await fetchKopisDetail(externalRef);
+  return detail?.cast || null;
+}
+
 export async function fetchCredits(externalRef) {
   if (!externalRef?.startsWith('tmdb:')) return null;
   const [, type, id] = externalRef.split(':');
@@ -163,7 +235,7 @@ export async function fetchCredits(externalRef) {
     if (!res.ok) return null;
     const data = await res.json();
     const director = (data.crew || []).find(c => c.job === 'Director')?.name || null;
-    const actors   = (data.cast || []).slice(0, 2).map(c => c.name);
+    const actors   = (data.cast || []).slice(0, 4).map(c => c.name);
     if (!director && !actors.length) return null;
     const parts = [];
     if (director) parts.push(director);
@@ -183,6 +255,16 @@ function dedup(items) {
   return items.filter(item => {
     if (seen.has(item.externalRef)) return false;
     seen.add(item.externalRef);
+    return true;
+  });
+}
+
+function dedupByTitle(items) {
+  const seen = new Set();
+  return items.filter(item => {
+    const key = item.title?.toLowerCase().replace(/\s+/g, '');
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
 }

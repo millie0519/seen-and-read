@@ -4,10 +4,82 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
   const kakaoKey = env.VITE_KAKAO_REST_KEY;
+  const kopisKey = env.VITE_KOPIS_KEY;
+
+  function getTag(xml, tag) {
+    const m = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`));
+    return m ? m[1].replace(/<!\[CDATA\[|\]\]>/g, '').trim() : '';
+  }
+  function fmtDate(d) { return d ? d.slice(0, 7) : ''; }
+  function dateRange(from, to) {
+    const f = fmtDate(from), t = fmtDate(to);
+    if (!f) return '';
+    return f === t ? f : `${f}~${t}`;
+  }
+  function parseKopisXml(xml) {
+    const items = [];
+    const re = /<db>([\s\S]*?)<\/db>/g;
+    let m;
+    while ((m = re.exec(xml)) !== null) {
+      const b = m[1];
+      const genre = getTag(b, 'genrenm');
+      const range = dateRange(getTag(b, 'prfpdfrom'), getTag(b, 'prfpdto'));
+      items.push({
+        title:       getTag(b, 'prfnm'),
+        creator:     null,
+        coverUrl:    getTag(b, 'poster') || null,
+        externalRef: `kopis:${getTag(b, 'mt20id')}`,
+        sub:         range || null,
+        genre,
+      });
+    }
+    return items;
+  }
 
   return {
     plugins: [
       react(),
+      {
+        name: 'kopis-detail-middleware',
+        configureServer(server) {
+          server.middlewares.use('/api/kopis-detail', async (req, res) => {
+            const url = new URL(req.url, 'http://localhost');
+            const id  = url.searchParams.get('id') || '';
+            try {
+              const apiUrl = `https://www.kopis.or.kr/openApi/restful/pblprfr/${id}?service=${kopisKey}`;
+              const xml    = await fetch(apiUrl).then(r => r.text());
+              const cast   = getTag(xml, 'prfcast');
+              const poster = getTag(xml, 'poster');
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ cast: cast || null, poster: poster || null }));
+            } catch {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: 'server error' }));
+            }
+          });
+        },
+      },
+      {
+        name: 'kopis-search-middleware',
+        configureServer(server) {
+          server.middlewares.use('/api/kopis-search', async (req, res) => {
+            const url   = new URL(req.url, 'http://localhost');
+            const query  = url.searchParams.get('query')  || '';
+            const page   = url.searchParams.get('page')   || '1';
+            const rows   = url.searchParams.get('rows')   || '20';
+            try {
+              const apiUrl = `https://www.kopis.or.kr/openApi/restful/pblprfr?service=${kopisKey}&stdate=20000101&eddate=20991231&shprfnm=${encodeURIComponent(query)}&rows=${rows}&cpage=${page}`;
+              const xml = await fetch(apiUrl).then(r => r.text());
+              const items = parseKopisXml(xml);
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ items }));
+            } catch {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: 'server error' }));
+            }
+          });
+        },
+      },
       {
         name: 'kakao-category-middleware',
         configureServer(server) {

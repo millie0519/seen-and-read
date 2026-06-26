@@ -13,7 +13,7 @@ function FeedPost({ rec, onOpen }) {
       <div className={styles.feedHeader}>
         <CatChip cat={rec.cat} solid />
         <div className={styles.feedHeaderMeta}>
-          <div className={`t-head ${styles.feedHeaderPlace}`}>{rec.place}</div>
+          <div className={`t-head ${styles.feedHeaderPlace}`}>{rec.place && <Icon name="pin" size={13} />}{rec.place}</div>
           <div className={`muted ${styles.feedHeaderDate}`}>
             {rec.span ? `${rec.span.start} ~ ${rec.span.end || '진행 중'}` : rec.when}
           </div>

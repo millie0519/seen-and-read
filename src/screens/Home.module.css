@@ -36,6 +36,7 @@
 
 .feedHeaderMeta { flex: 1; min-width: 0; }
 .feedHeaderPlace { font-size: 13px; line-height: 1.2; }
+.feedHeaderPlace svg{ margin: 0 2px -2px -2px; fill: var(--ink-soft); }
 .feedHeaderDate { font-size: 11px; }
 
 .coverBox {

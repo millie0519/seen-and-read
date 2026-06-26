@@ -11,7 +11,7 @@ import {
 import {
   PiHouseLineFill, PiPencilLineBold, PiUserFill, PiTrashBold, PiChartBarFill,
   PiFilmSlateFill, PiTelevisionSimpleFill, PiPanoramaFill, PiMusicNotesFill,
-  PiQuotesFill,
+  PiQuotesFill, PiNoteBold,
 } from 'react-icons/pi';
 import { CATS } from '../data.js';
 import styles from './ui.module.css';
@@ -47,6 +47,7 @@ const ICON_MAP = {
   chart: PiChartBarFill,
   share: MdShare,
   edit: PiPencilLineBold,
+  note: PiNoteBold,
   trash: PiTrashBold,
   quote: PiQuotesFill,
   face: MdFace,

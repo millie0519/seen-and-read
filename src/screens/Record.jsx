@@ -3,7 +3,7 @@ import { CATS } from '../data.js';
 import { Icon, Stars } from '../components/ui.jsx';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { saveNewRecord, updateRecord, fetchRecentPeople, searchPeople, touchPerson, deletePerson, addReplayLog, findExistingByRef, fetchRecentPlaces } from '../db/records.js';
-import { searchByCategory, searchMoreByCategory, fetchCredits } from '../api/search.js';
+import { searchByCategory, searchMoreByCategory, fetchCredits, fetchKopisCredits, fetchKopisDetail } from '../api/search.js';
 import { resizeImage } from '../utils/image.js';
 import styles from './Record.module.css';
 
@@ -92,7 +92,7 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
     if (isReplay) return;
     if (skipSearch.current) { skipSearch.current = false; return; }
     if (isEdit && title === initialTitle.current) return;
-    const searchable = ['book', 'movie', 'drama'].includes(cat);
+    const searchable = ['book', 'movie', 'drama', 'stage', 'concert'].includes(cat);
     if (!searchable || title.trim().length < 1) {
       setResults([]); setSearchOpen(false); return;
     }
@@ -116,6 +116,10 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
     if (result.externalRef?.startsWith('tmdb:')) {
       const credits = await fetchCredits(result.externalRef);
       setCreator(credits || result.creator || '');
+    } else if (result.externalRef?.startsWith('kopis:')) {
+      const detail = await fetchKopisDetail(result.externalRef);
+      if (detail?.poster) setCoverUrl(detail.poster);
+      setCreator(detail?.cast || result.creator || '');
     } else {
       setCreator(result.creator || '');
     }
@@ -289,10 +293,11 @@ const fmtDate = (iso) => {
         <label className={`t-head ${styles.lbl}`}>제목</label>
         <div className={styles.titleWrap} ref={titleWrapRef}>
           <div className={`card-flat ${styles.inputBox}`} style={{ opacity: isReplay ? 0.7 : 1 }}>
-            <Icon name="search" size={20} />
-            <input value={title} onChange={e => !isReplay && setTitle(e.target.value)} placeholder="제목을 입력하세요"
+            <Icon name={['book','movie','drama','stage','concert'].includes(cat) ? 'search' : 'note'} size={20} />
+            <input value={title} onChange={e => !isReplay && setTitle(e.target.value)}
+              placeholder={['book','movie','drama','stage','concert'].includes(cat) ? '제목을 입력하세요' : '제목을 직접 입력하세요'}
               className="field-input" readOnly={isReplay} enterKeyHint="search"
-              onKeyDown={e => { if (e.key === 'Enter' && title.trim() && !isReplay) { setSearchOpen(false); setSheet('search'); } }} />
+              onKeyDown={e => { if (e.key === 'Enter' && title.trim() && !isReplay && ['book','movie','drama','stage','concert'].includes(cat)) { setSearchOpen(false); setSheet('search'); } }} />
             {title && !isReplay && <button onClick={() => { setTitle(''); setResults([]); setSearchOpen(false); setExisting(null); }} className="btn-reset"><Icon name="close" size={18} /></button>}
           </div>
           {searchOpen && searchResults.length > 0 && (

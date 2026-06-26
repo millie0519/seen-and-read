@@ -165,7 +165,6 @@
 .stageCard {
   aspect-ratio: 2 / 3;
   position: relative;
-  filter: drop-shadow(3px 3px 0 var(--ink));
 }
 
 .stageCard::after {
