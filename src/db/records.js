@@ -39,6 +39,7 @@ function buildView(log, title, quotes, siblings) {
     coverFg:  title.cover_fg,
     coverUrl:    title.meta?.coverUrl    || null,
     releaseYear: title.meta?.releaseYear || null,
+    cast:     log.cast || null,
     status:   log.status,
     rating:   log.rating,
     n:        log.n,
@@ -81,7 +82,7 @@ function buildView(log, title, quotes, siblings) {
         place:   l.place,
         rating:  l.rating,
         note:    l.one_liner,
-        creator: title.creator || null,
+        creator: l.cast || title.creator || null,
       }));
   }
 
@@ -174,7 +175,7 @@ export async function findExistingByRef(externalRef) {
 }
 
 export async function saveNewRecord(base) {
-  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, releaseYear, times, photos } = base;
+  const { cat, title, creator, cast, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, releaseYear, times, photos } = base;
   const colors   = CAT_COLORS[cat] || {};
   const longForm = ['book', 'drama', 'etc'].includes(cat);
   const now      = Date.now();
@@ -206,6 +207,7 @@ export async function saveNewRecord(base) {
       progress:    null,
       one_liner:   note?.trim() || null,
       note:        null,
+      cast:        cast?.trim() || null,
       place:       place || null,
       place_geo:   null,
       companions:  withStr ? withStr.split(', ').filter(Boolean) : [],
@@ -226,7 +228,7 @@ export async function updateRecord(logId, patch) {
   const log = await db.logs.get(logId);
   if (!log) return;
 
-  const { cat, title, creator, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, releaseYear, photos } = patch;
+  const { cat, title, creator, cast, status, rating, note, quotes, tags, with: withStr, place, span, dateSingle, externalRef, coverUrl, releaseYear, photos } = patch;
   const colors   = cat ? CAT_COLORS[cat] : {};
   const longForm = ['book', 'drama', 'etc'].includes(cat);
 
@@ -253,6 +255,7 @@ export async function updateRecord(logId, patch) {
       status,
       rating,
       one_liner:   note?.trim() || null,
+      cast:        cast?.trim() || null,
       place:       place || null,
       companions:  withStr ? withStr.split(', ').filter(Boolean) : [],
       tags:        tags || [],
@@ -297,6 +300,7 @@ export async function addReplayLog(titleId, currentTimes, logData) {
     progress:    null,
     one_liner:   logData.note?.trim() || null,
     note:        null,
+    cast:        logData.cast?.trim() || null,
     place:       logData.place?.trim() || null,
     place_geo:   null,
     companions:  [],

@@ -189,7 +189,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
         <button onClick={onClose} className="icon-btn" style={{ border: '2.5px solid var(--ink)' }}><Icon name="back" size={22} /></button>
         <CatChip cat={rec.cat} solid />
         <div className={styles.detailTopBarRight}>
-          <StatusPills rec={rec} showNthViewing={rec.n > 1 ? rec.n : undefined} />
+          <StatusPills rec={rec} showNthViewing={rec.times > 1 ? rec.n : undefined} />
           <button onClick={() => setConfirmDelete(true)} className={styles.deleteBtn}>
             <Icon name="trash" size={17} />
           </button>
@@ -215,7 +215,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
             <h2 className={`t-display ${styles.heroTitle}`}>
               {rec.title}{rec.releaseYear && <span className={`muted ${styles.heroTitleYear}`}> ({rec.releaseYear})</span>}
             </h2>
-            <div className={`muted ${styles.heroCreator}`}>{rec.creator}</div>
+            <div className={`muted ${styles.heroCreator}`}>{rec.cast || rec.creator}</div>
             <div className={styles.heroStars}><Stars value={rec.rating} size={19} gap={3} /></div>
             <div className={styles.metaRowWrap}>
               <div className={styles.metaRows}>
@@ -274,7 +274,7 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
                   const isActive = lg.id === viewingId;
                   return (
                     <div key={i} className={i === rec.logs.length - 1 ? styles.timelineItemLast : styles.timelineItem}>
-                      <div className={styles.timelineDot} style={{ background: i === 0 ? 'var(--status-times)' : '#fff' }} />
+                      <div className={styles.timelineDot} style={{ background: isActive ? 'var(--status-times)' : '#fff' }} />
                       <div
                         className={`card-flat ${styles.logCard} ${isActive ? styles.logCardActive : ''}`}
                         onClick={() => !isActive && setViewingId(lg.id)}
@@ -306,25 +306,29 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
             </div>
           )}
 
-          {!confirmDelete ? (
-            <div className={styles.actionsRow}>
-              <button className="btn" style={{ flex: 1 }} onClick={() => onEdit(rec)}>
-                <Icon name="edit" size={17} style={{ verticalAlign: '-3px', marginRight: 4 }} />수정
-              </button>
-              <button className="btn btn-sky" style={{ flex: 1 }} onClick={() => onReplay(rec)}>
-                <Icon name="plus" size={17} style={{ verticalAlign: '-3px', marginRight: 4 }} />{rec.logs ? '새 회차 추가' : '다시 보기'}
-              </button>
-            </div>
-          ) : (
-            <div className={styles.deleteConfirm}>
-              <span className={`t-head muted ${styles.deleteConfirmMsg}`}>정말 삭제할까요?</span>
-              <button onClick={() => setConfirmDelete(false)} className="btn" style={{ padding: '10px 16px', fontSize: 14 }}>취소</button>
-              <button onClick={handleDelete} className="btn" style={{ padding: '10px 16px', fontSize: 14, background: 'var(--status-dropped)', color: '#fff', borderColor: 'var(--status-dropped)' }}>삭제</button>
-            </div>
-          )}
+          <div className={styles.actionsRow}>
+            <button className="btn" style={{ flex: 1 }} onClick={() => onEdit(rec)}>
+              <Icon name="edit" size={17} style={{ verticalAlign: '-3px', marginRight: 4 }} />수정
+            </button>
+            <button className="btn btn-sky" style={{ flex: 1 }} onClick={() => onReplay(rec)}>
+              <Icon name="plus" size={17} style={{ verticalAlign: '-3px', marginRight: 4 }} />{rec.logs ? '새 회차 추가' : '다시 보기'}
+            </button>
+          </div>
         </div>
       </div>
 
+      {confirmDelete && (
+        <div className={styles.modalBack} onClick={() => setConfirmDelete(false)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={`t-head ${styles.modalTitle}`}>이 기록을 삭제할까요?</div>
+            <div className={`muted ${styles.modalDesc}`}>삭제하면 되돌릴 수 없어요.</div>
+            <div className={styles.modalBtns}>
+              <button onClick={() => setConfirmDelete(false)} className="btn" style={{ flex: 1 }}>취소</button>
+              <button onClick={handleDelete} className="btn" style={{ flex: 1, background: 'var(--status-dropped)', color: '#fff', borderColor: 'var(--status-dropped)' }}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

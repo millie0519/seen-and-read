@@ -295,8 +295,32 @@
 .logNote { font-size: 13px; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
 .actionsRow { display: flex; gap: 10px; margin-top: 32px; }
-.deleteConfirm { display: flex; align-items: center; gap: 10px; }
-.deleteConfirmMsg { flex: 1; font-size: 13px; }
+
+/* ── Delete Modal ── */
+.modalBack {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modalCard {
+  background: var(--paper);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-lg);
+  padding: 24px 20px 20px;
+  width: 100%;
+  max-width: 300px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.modalTitle { font-size: 17px; margin-bottom: 6px; }
+.modalDesc { font-size: 13px; margin-bottom: 20px; }
+.modalBtns { display: flex; gap: 10px; }
 
 /* ── LogSheet ── */
 .logSheetHeader {

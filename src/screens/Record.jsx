@@ -28,11 +28,15 @@ function RecordScreen({ rec: initialRec, replayFor, onClose, onSaved }) {
 
   const [cat, setCat]                   = React.useState(base.cat ?? 'book');
   const [title, setTitle]               = React.useState(base.title ?? '');
-  const [creator, setCreator]           = React.useState(base.creator ?? '');
+  const [creator, setCreator]           = React.useState(
+    isEdit && ['stage','concert'].includes(base.cat)
+      ? (initialRec?.cast ?? initialRec?.creator ?? '')
+      : (base.creator ?? '')
+  );
   const [rating, setRating]             = React.useState(initialRec?.rating ?? 4);
   const isLongFormCat = ['book', 'drama', 'etc'].includes(base.cat ?? 'book');
   const [status, setStatus]             = React.useState(initialRec?.status ?? (isLongFormCat ? null : 'done'));
-  const [times, setTimes]               = React.useState(isReplay ? (replayFor.n + 1) : (initialRec?.times ?? 1));
+  const [times, setTimes]               = React.useState(isReplay ? (replayFor.times + 1) : (initialRec?.n ?? 1));
   const [note, setNote]                 = React.useState(initialRec?.note ?? '');
   const [quotes, setQuotes]             = React.useState(initialRec?.quotes?.length ? initialRec.quotes : ['']);
   const [startDate, setStartDate]       = React.useState(initialRec?.rawStart ?? new Date().toISOString().slice(0, 10));
@@ -167,6 +171,7 @@ const fmtDate = (iso) => {
           rating,
           date:   endDate || null,
           note:   note.trim() || null,
+          cast:   creator.trim() || null,
           place:  place || null,
           photos: photos.length ? photos : [],
         });
@@ -175,7 +180,8 @@ const fmtDate = (iso) => {
         const base = {
           cat,
           title:       title.trim(),
-          creator:     creator.trim() || null,
+          creator:     ['stage','concert'].includes(cat) ? null : creator.trim() || null,
+          cast:        ['stage','concert'].includes(cat) ? creator.trim() || null : null,
           status, times, rating,
           note:        note.trim() || null,
           quotes:      quotes.filter(q => q.trim()),
@@ -325,7 +331,8 @@ const fmtDate = (iso) => {
 
         <div className={`card-flat ${styles.inputBoxGap}`}>
           <Icon name="user" size={20} />
-          <input value={creator} onChange={e => setCreator(e.target.value)} placeholder="감독 · 작가 · 아티스트 (선택)"
+          <input value={creator} onChange={e => setCreator(e.target.value)}
+            placeholder={['stage','concert'].includes(cat) ? '출연진 (선택)' : '감독 · 작가 · 아티스트 (선택)'}
             className="field-input" />
           {creator && <button onClick={() => setCreator('')} className="btn-reset"><Icon name="close" size={18} /></button>}
         </div>
