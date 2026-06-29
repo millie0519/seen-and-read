@@ -285,6 +285,12 @@ function DetailPage({ logId, onClose, onDelete, onEdit, onReplay }) {
                           <span className={`muted ${styles.logCardDate}`}>{lg.date}</span>
                           <span className={styles.logCardStars}><Stars value={lg.rating} size={12} /></span>
                         </div>
+                        {rec.cat === 'stage' && lg.creator && (
+                          <div className={styles.logPlace}>
+                            <span className={styles.logPlaceIcon}><Icon name="user" size={13} /></span>
+                            <span className={`muted ${styles.logPlaceText}`}>{lg.creator}</span>
+                          </div>
+                        )}
                         {lg.place && (
                           <div className={styles.logPlace}>
                             <span className={styles.logPlaceIcon}><Icon name="pin" size={13} /></span>

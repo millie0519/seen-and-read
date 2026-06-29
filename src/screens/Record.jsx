@@ -323,11 +323,11 @@ const fmtDate = (iso) => {
           )}
         </div>
 
-        <div className={`card-flat ${styles.inputBoxGap}`} style={{ opacity: isReplay ? 0.7 : 1 }}>
+        <div className={`card-flat ${styles.inputBoxGap}`}>
           <Icon name="user" size={20} />
-          <input value={creator} onChange={e => !isReplay && setCreator(e.target.value)} placeholder="감독 · 작가 · 아티스트 (선택)"
-            className="field-input" readOnly={isReplay} />
-          {creator && !isReplay && <button onClick={() => setCreator('')} className="btn-reset"><Icon name="close" size={18} /></button>}
+          <input value={creator} onChange={e => setCreator(e.target.value)} placeholder="감독 · 작가 · 아티스트 (선택)"
+            className="field-input" />
+          {creator && <button onClick={() => setCreator('')} className="btn-reset"><Icon name="close" size={18} /></button>}
         </div>
 
         {existingTitle && !isEdit && !isReplay && (

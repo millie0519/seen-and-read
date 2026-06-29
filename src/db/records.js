@@ -71,16 +71,17 @@ function buildView(log, title, quotes, siblings) {
     view.logs = [...siblings]
       .sort((a, b) => b.n - a.n)
       .map(l => ({
-        id:     l.id,
-        n:      l.n,
-        date:   l.date_single
+        id:      l.id,
+        n:       l.n,
+        date:    l.date_single
           ? fmtIso(l.date_single)
           : l.date_start
             ? (l.date_end ? `${l.date_start} ~ ${l.date_end}` : `${l.date_start} ~ 진행 중`)
             : whenString(l.created_at),
-        place:  l.place,
-        rating: l.rating,
-        note:   l.one_liner,
+        place:   l.place,
+        rating:  l.rating,
+        note:    l.one_liner,
+        creator: title.creator || null,
       }));
   }
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { MdSkipPrevious, MdSkipNext, MdPause, MdFavorite } from 'react-icons/md';
 import { CATS } from '../data.js';
 import { Icon, Squiggle, SectionHead } from '../components/ui.jsx';
 import { fetchAllRecordViews } from '../db/records.js';
@@ -66,6 +67,27 @@ function ExhibitCard({ rec, onOpen, styles }) {
   );
 }
 
+function ConcertCard({ rec, onOpen, styles }) {
+  return (
+    <div onClick={() => onOpen(rec.id)} className={styles.concertItem}>
+      <div className={styles.concertCard}>
+        <div className={styles.concertCover} style={{ background: rec.cover, color: rec.coverFg }}>
+          {rec.coverUrl ? <img src={rec.coverUrl} alt={rec.title} style={COVER_IMG} /> : <Icon name="music" size={28} />}
+        </div>
+        <div className={styles.concertControls}>
+          <div className={styles.concertBtns}>
+            <MdSkipPrevious size={16} />
+            <MdPause size={18} />
+            <MdSkipNext size={16} />
+          </div>
+          <MdFavorite size={13} className={styles.concertHeart} />
+        </div>
+      </div>
+      <div className={`t-head ${styles.cardTitle}`}>{rec.title}</div>
+    </div>
+  );
+}
+
 function DramaCard({ rec, onOpen, styles }) {
   return (
     <div onClick={() => onOpen(rec.id)} className={styles.dramaItem}>
@@ -96,6 +118,7 @@ const CARD_FRAMES = {
   drama:   DramaCard,
   stage:   StageCard,
   exhibit: ExhibitCard,
+  concert: ConcertCard,
 };
 
 function renderCard(rec, onOpen, styles) {

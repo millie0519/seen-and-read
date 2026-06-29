@@ -238,7 +238,7 @@
 .noteText { font-size: 15px; line-height: 1.6; white-space: pre-line; margin: 0; }
 
 /* Timeline */
-.timeline { margin-bottom: 22px; }
+.timeline { margin: 20px 0; }
 
 .timelineHeader {
   display: flex;
